@@ -1,0 +1,30 @@
+============
+Acknowledgements
+============
+
+The paper describing :code:`redback` is currently in preparation. :code:`redback_surrogates` is a part of :code:`redback`.
+If you use :code:`redback_surrogate` in a scientific publication before this paper is released,
+please acknowledge the :code:`redback` software, and cite the github/documentation page.
+
+More detailed instructions for acknowledgement are provided in the :code:`redback` `documentation <https://redback.readthedocs.io/en/latest/acknowledgements.html>`_.
+
+Using :code:`redback_surrogates` to evaluate a model
+-------------------------
+
+Plenty of :code:`redback_surrogates` models build on other open-source packages. The appropriate citation if using such models in scientific publication is available as an attribute to the model.
+
+For example,
+
+.. code:: python
+
+    from redback_surrogates.kilonova_models import kasen2017
+    import numpy as np
+
+    citation = kasen2017.citation
+
+Here citation will be a url to the NASA ads page for the paper describing the model.
+Please cite this paper and the paper describing :code:`redback` if using this model in a scientific publication.
+
+In several cases, the citation will be `redback`, in which case,
+only a citation to :code:`redback` paper is necessary.
+Although we recommend periodically checking the citation in the latest :code:`redback_surrogates` release as some models are often updated.

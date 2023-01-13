@@ -1,0 +1,73 @@
+============
+Models
+============
+
+In :code:`redback` we have already implemented a lot of different models, which can be combined or modified to create another model easily.
+These models range from phenomenological, to analytical and semi-analytical models. In :code:`redback_surrogates` we provide access to surrogates built with machine learning techniques to hydrodynamical simulations.
+This package provides the interface and the data to use such surrogate models. While this package is standalone and all models can be used through just this package, without using :code:`redback`,
+we recommend using them through :code:`redback` anyway. We note that many of these surrogates are available elsewhere, but this package just provides one convenient interface and location.
+
+Specifically, the surrogate models included in this package are:
+
+- Afterglow models
+
+    - Surrogate built on top of `jetfit <https://github.com/NYU-CAL/JetFit>`_.
+    - Surrogate built on top of `boxfit <https://cosmo.nyu.edu/afterglowlibrary/index.html>`_.
+
+- Kilonova models
+
+    - Surrogate for Kasen BNS using `kilonovanet <https://github.com/klukosiute/kilonovanet>`_.
+    - Surrogate for Bulla BNS using `kilonovanet <https://github.com/klukosiute/kilonovanet>`_.
+    - Surrogate for Bulla NSBH using `kilonovanet <https://github.com/klukosiute/kilonovanet>`_.
+    - Surrogate for Kedia2022 BNS
+
+ - Tidal disruption models
+
+    - Surrogate from numerical simulation <https://ui.adsabs.harvard.edu/abs/2019ApJ...872..151M/abstract>`_
+
+- Supernova models
+
+    - Surrogate for r-process from collapsars `Barnes and Metzger 2022 https://ui.adsabs.harvard.edu/abs/2022ApJ...939L..29B/exportcitation>`_.
+
+For a full up to date list of models implemented in :code:`redback_surrogates`, look at the `API <https://redback_surrogates.readthedocs.io/en/latest/>`_.
+Note that many of these models can either output the spectra or the magnitude/flux at specific bands due to the limitations of the surrogates. These are noted in the documentation but for models with spectra,
+we recommend using these models through :code:`redback` package as that provides the interface to convert the spectra to magnitudes/fluxes using SNcosmo.
+
+Using :code:`redback_surrogate` models as functions
+-------------------------
+
+All models in :code:`redback_surrogate` are implemented as functions with minimal dependencies.
+This means that users can simply use these functions by themselves as you would any other python function.
+All users need to do is pass into the function a time array and any other parameter required by the function.
+Note that we are showing the interface through :code:`redback` here to take advantage of :code:`redback` allowing output in any band/output_format.
+The raw spectra interface is available through :code:`redback_surrogates` as well.
+
+For example:
+
+.. code:: python
+
+    from redback.constants import day_to_s
+    from redback.model_library import all_models_dict
+    import numpy as np
+
+    model = 'bulla_bns_kilonovanet'
+
+    function = all_models_dict[model]
+    output_format = 'magnitude'
+    bands = 'lsstu'
+    priors = redback.priors.get_priors(model=model)
+    time = np.logspace(2, 8, 100)/day_to_s
+    magnitude = function(time, output_format=output_format, bands=bands, **priors.sample())
+
+Here we use `all_models_dict` to provide a simple way to access the relevant function. A user could of course just import the function themselves.
+We also use priors.sample() to randomly sample a set of parameters from the prior distributions for the model. Each function provided in code:`redback_surrogates` has a corresponding prior provided in :code:`redback`.
+
+Users can also use the prior objects to get a simulation of the light curves predicted by the function for many more randomly drawn samples from the prior.
+The priors are simply a dictionary so users could also just pass a dictionary/dataframe they created themselves as well.
+Furthermore, we can also place arbitrary constraints on the priors to make a really specific population/simulation.
+For example, we could make a constraint that all priors in the population were brighter than 24th mag at peak or something else.
+Almost any time of constraint is possible, as long as it can be written mathematically.
+Please look through the :code:`redback` documentation for more details on how to do this extra tricks.
+
+
+

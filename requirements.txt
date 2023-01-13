@@ -1,0 +1,13 @@
+setuptools
+numpy
+pandas
+scipy
+scikit_learn
+sncosmo
+matplotlib
+astropy
+extinction
+requests
+lxml
+sphinx-rtd-theme
+sphinx-tabs

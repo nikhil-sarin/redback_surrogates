@@ -1,0 +1,66 @@
+============
+Installation
+============
+
+.. tabs::
+
+   .. tab:: Conda
+
+      .. code-block:: console
+
+          $ conda install -c conda-forge redback
+
+      Supported python versions: 3.7+.
+
+   .. tab:: Pip
+
+      .. code-block:: console
+
+          $ pip install redback
+
+      Supported python versions: 3.7+.
+
+
+This will install all requirements for running :code:`redback_surrogates` for creating models and the data required to use these models.
+Currently :code:`redback_surrogate` is going significant development, and we can not guarantee that any `pip` or `conda` releases will be completely up to date.
+Therefore, for the near future, we recommend installing :code:`redback_surrogate` from source, and in development mode.
+
+Install :code:`redback_surrogate` from source
+-------------------------
+
+:code:`redback_surrogate` is developed and tested with Python 3.7+. In the
+following, we assume you have a working python installation, `python pip
+<https://packaging.python.org/tutorials/installing-packages/#use-pip-for-installing>`_,
+and `git <https://git-scm.com/>`_.
+
+Clone the repository, install the requirements, and then install the software:
+
+.. code-block:: console
+
+   $ git clone https://github.com/nikhil-sarin/redback_surrogate
+   $ cd redback_surrogate/
+   $ pip install -r requirements.txt
+   $ pip install .
+
+To install with development mode, use:
+
+.. code-block:: console
+
+   $ git clone https://github.com/nikhil-sarin/redback_surrogate
+   $ cd redback_surrogate/
+   $ pip install -r requirements.txt
+   $ pip install -e .
+
+For full functionality, please also install optional requirements.
+
+.. code-block:: console
+
+   $ pip install -r optional_requirements.txt
+
+You are now ready to use redback_surrogate. Please check out the `examples <https://github.com/nikhil-sarin/redback/tree/master/examples>`_
+
+Install through :code:`redback`
+-------------------------
+
+If you install optional requirements in :code:`redback`, :code:`redback_surrogate` will be installed automatically.
+For instructions on installing :code:`redback`, please see the `redback installation instructions <https://redback.readthedocs.io/en/latest/installation.html>`_.
