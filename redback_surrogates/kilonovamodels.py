@@ -6,11 +6,11 @@ import os
 dirname = os.path.dirname(__file__)
 
 @citation_wrapper('https://ui.adsabs.harvard.edu/abs/2022MNRAS.516.1137L/abstract')
-def bulla_bns_kilonovanet_spectra(time_source_frame, redshift, mej_dyn, mej_disk, phi, costheta_obs):
+def bulla_bns_kilonovanet_spectra(time_source_frame, redshift, mej_dyn, mej_disk, phi, costheta_obs, **kwargs):
     """
     Kilonovanet model based on Bulla BNS merger simulations
 
-    :param time_source_frame: time in source frame
+    :param time_source_frame: time in source frame in days
     :param redshift: redshift
     :param mej_dyn: dynamical mass of ejecta in solar masses
     :param mej_disk: disk mass of ejecta in solar masses
@@ -29,11 +29,11 @@ def bulla_bns_kilonovanet_spectra(time_source_frame, redshift, mej_dyn, mej_disk
                                                                   frequency=wavelength_observer_frame,
                                                                   spectra=spectra)
 @citation_wrapper('https://ui.adsabs.harvard.edu/abs/2022MNRAS.516.1137L/abstract')
-def bulla_nsbh_kilonovanet_spectra(time_source_frame, redshift, mej_dyn, mej_disk, costheta_obs):
+def bulla_nsbh_kilonovanet_spectra(time_source_frame, redshift, mej_dyn, mej_disk, costheta_obs, **kwargs):
     """
     Kilonovanet model based on Bulla NSBH merger simulations
 
-    :param time_source_frame: time in source frame
+    :param time_source_frame: time in source frame in days
     :param redshift: redshift
     :param mej_dyn: dynamical mass of ejecta in solar masses
     :param mej_disk: disk mass of ejecta in solar masses
@@ -51,11 +51,11 @@ def bulla_nsbh_kilonovanet_spectra(time_source_frame, redshift, mej_dyn, mej_dis
                                                                   frequency=wavelength_observer_frame,
                                                                   spectra=spectra)
 @citation_wrapper('https://ui.adsabs.harvard.edu/abs/2022MNRAS.516.1137L/abstract')
-def kasen_bns_kilonovanet_spectra(time_source_frame, redshift, mej, vej,chi):
+def kasen_bns_kilonovanet_spectra(time_source_frame, redshift, mej, vej, chi, **kwargs):
     """
     Kilonovanet model based on Kasen BNS merger simulations
 
-    :param time_source_frame: time in source frame
+    :param time_source_frame: time in source frame in days
     :param redshift: redshift
     :param mej: ejecta mass in solar masses
     :param vej: ejecta velocity in units of c

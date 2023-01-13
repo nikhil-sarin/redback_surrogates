@@ -3,10 +3,8 @@ numpy
 pandas
 scipy
 scikit_learn
-sncosmo
+bilby
 matplotlib
-astropy
-extinction
 requests
 lxml
 sphinx-rtd-theme
