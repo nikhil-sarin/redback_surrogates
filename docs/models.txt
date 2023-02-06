@@ -23,7 +23,7 @@ Specifically, the surrogate models included in this package are:
 
  - Tidal disruption models
 
-    - Surrogate from numerical simulation <https://ui.adsabs.harvard.edu/abs/2019ApJ...872..151M/abstract>`_
+    - Surrogate from numerical simulation `<https://ui.adsabs.harvard.edu/abs/2019ApJ...872..151M/abstract>`_
 
 - Supernova models
 
