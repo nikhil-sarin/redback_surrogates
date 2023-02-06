@@ -27,9 +27,9 @@ Specifically, the surrogate models included in this package are:
 
 - Supernova models
 
-    - Surrogate for r-process from collapsars `Barnes and Metzger 2022 https://ui.adsabs.harvard.edu/abs/2022ApJ...939L..29B/exportcitation>`_.
+    - Surrogate for r-process from collapsars `Barnes and Metzger 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...939L..29B/abstract>`_.
 
-For a full up to date list of models implemented in :code:`redback_surrogates`, look at the `API <https://redback_surrogates.readthedocs.io/en/latest/>`_.
+For a full upto date list of models implemented in :code:`redback_surrogates`, look at the `API <https://redback_surrogates.readthedocs.io/en/latest/>`_.
 Note that many of these models can either output the spectra or the magnitude/flux at specific bands due to the limitations of the surrogates. These are noted in the documentation but for models with spectra,
 we recommend using these models through :code:`redback` package as that provides the interface to convert the spectra to magnitudes/fluxes using SNcosmo.
 
@@ -68,6 +68,9 @@ Furthermore, we can also place arbitrary constraints on the priors to make a rea
 For example, we could make a constraint that all priors in the population were brighter than 24th mag at peak or something else.
 Almost any time of constraint is possible, as long as it can be written mathematically.
 Please look through the :code:`redback` documentation for more details on how to do this extra tricks.
+
+Note that with surrogates, the prior ranges are determined by the trained model. Setting priors outside this validity domain will either not work or potentially give unreliable results.
+We recommend using the priors provided by :code:`redback` for the models in :code:`redback_surrogates` to avoid this issue.
 
 
 

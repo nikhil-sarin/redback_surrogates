@@ -8,7 +8,7 @@ Installation
 
       .. code-block:: console
 
-          $ conda install -c conda-forge redback
+          $ conda install -c conda-forge redback_surrogate
 
       Supported python versions: 3.7+.
 
@@ -16,13 +16,13 @@ Installation
 
       .. code-block:: console
 
-          $ pip install redback
+          $ pip install redback_surrogate
 
       Supported python versions: 3.7+.
 
 
 This will install all requirements for running :code:`redback_surrogates` for creating models and the data required to use these models.
-Currently :code:`redback_surrogate` is going significant development, and we can not guarantee that any `pip` or `conda` releases will be completely up to date.
+Currently :code:`redback_surrogate` is going significant development, and we can not guarantee that any `pip` or `conda` releases will be completely upto date.
 Therefore, for the near future, we recommend installing :code:`redback_surrogate` from source, and in development mode.
 
 Install :code:`redback_surrogate` from source

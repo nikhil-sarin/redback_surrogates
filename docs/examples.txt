@@ -4,10 +4,8 @@ Examples
 
 We provide several different examples so users can get a more practical grasp of how to use :code:`redback_surrogates`.
 
-- `kilonovanet surrogate <https://github.com/nikhil-sarin/redback/blob/master/examples/broadband_afterglow_private_data_example.py>`_
-- `jetfit <https://github.com/nikhil-sarin/redback/blob/master/examples/fit_your_own_model_example.py>`_
-- `boxfit <https://github.com/nikhil-sarin/redback/blob/master/examples/kilonova_example.py>`_
-- `r_process_collapsar <https://github.com/nikhil-sarin/redback/blob/master/examples/magnetar_boosted_example.py>`_
+- `kilonovanet surrogate <https://github.com/nikhil-sarin/redback/blob/master/examples/kilonovanet_example.py>`_
 
-Furthermore, there are several examples in the :code:`redback` repository that use :code:`redback_surrogates` to fit models to data.
+Furthermore, there are several examples in the :code:`redback` repository that can be easily modified to use :code:`redback_surrogates` to fit models to data.
 Please see these examples `here <https://github.com/nikhil-sarin/redback/blob/master/examples/RedbackTutorial.ipynb>`_.
+Replacing the models in many cases will be as simple as changing the model string.
