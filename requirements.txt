@@ -3,9 +3,7 @@ numpy
 pandas
 scipy
 scikit_learn
-bilby
 matplotlib
-kilonovanet
 lxml
 sphinx-rtd-theme
 sphinx-tabs
