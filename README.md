@@ -5,7 +5,7 @@ If your aim is to just evaluate the models you could use this package independen
 
 [![Documentation Status](https://readthedocs.org/projects/redback_surrogates/badge/?version=latest)](https://redback_surrogates.readthedocs.io/en/latest/?badge=latest)
 ![Python package](https://github.com/nikhil-sarin/redback_surrogates/workflows/Python%20application/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/nikhil-sarin/redback_surrogates/badge.svg?branch=master)](https://coveralls.io/github/nikhil-sarin/redback_surrogates?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/nikhil-sarin/redback_surrogates/badge.svg?branch=main)](https://coveralls.io/github/nikhil-sarin/redback_surrogates?branch=main)
 ![PyPI](https://img.shields.io/pypi/v/redback_surrogates)
 
 # Redback

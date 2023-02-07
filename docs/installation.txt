@@ -8,7 +8,7 @@ Installation
 
       .. code-block:: console
 
-          $ conda install -c conda-forge redback_surrogate
+          $ conda install -c conda-forge redback-surrogates
 
       Supported python versions: 3.7+.
 
@@ -16,7 +16,7 @@ Installation
 
       .. code-block:: console
 
-          $ pip install redback_surrogate
+          $ pip install redback-surrogates
 
       Supported python versions: 3.7+.
 
@@ -25,7 +25,7 @@ This will install all requirements for running :code:`redback_surrogates` for cr
 Currently :code:`redback_surrogate` is going significant development, and we can not guarantee that any `pip` or `conda` releases will be completely upto date.
 Therefore, for the near future, we recommend installing :code:`redback_surrogate` from source, and in development mode.
 
-Install :code:`redback_surrogate` from source
+Install :code:`redback_surrogates` from source
 -------------------------
 
 :code:`redback_surrogate` is developed and tested with Python 3.7+. In the
@@ -37,8 +37,8 @@ Clone the repository, install the requirements, and then install the software:
 
 .. code-block:: console
 
-   $ git clone https://github.com/nikhil-sarin/redback_surrogate
-   $ cd redback_surrogate/
+   $ git clone https://github.com/nikhil-sarin/redback_surrogates
+   $ cd redback_surrogates/
    $ pip install -r requirements.txt
    $ pip install .
 
@@ -46,8 +46,8 @@ To install with development mode, use:
 
 .. code-block:: console
 
-   $ git clone https://github.com/nikhil-sarin/redback_surrogate
-   $ cd redback_surrogate/
+   $ git clone https://github.com/nikhil-sarin/redback_surrogates
+   $ cd redback_surrogates/
    $ pip install -r requirements.txt
    $ pip install -e .
 
