@@ -26,5 +26,5 @@ API:
    :recursive:
 
    afterglowmodels
-   kilonovamodels
    supernovamodels
+   kilonovamodels
