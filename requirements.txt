@@ -5,7 +5,7 @@ scipy
 scikit_learn
 bilby
 matplotlib
-requests
+kilonovanet
 lxml
 sphinx-rtd-theme
 sphinx-tabs
