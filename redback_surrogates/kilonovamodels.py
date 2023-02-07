@@ -1,7 +1,7 @@
 import numpy as np
 import kilonovanet as knnet
 from collections import namedtuple
-from utils import citation_wrapper, convert_to_observer_frame
+from redback_surrogates.utils import citation_wrapper, convert_to_observer_frame
 import os
 dirname = os.path.dirname(__file__)
 

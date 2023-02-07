@@ -23,12 +23,11 @@ class TestModels(unittest.TestCase):
         return prior_dict
 
     def test_models(self):
-        kwargs = dict(frequency=2e14)
         times = np.array([1, 2, 3])
         for f in self.prior_files:
             print(f)
             model_name = f.replace(".prior", "")
             prior = self.get_prior(file=f)
             function = redback_surrogates.model_library.all_models_dict[model_name]
-            spectra = function(times, **prior.sample(), **kwargs)
-            self.assertEqual(len(spectra.time), len(spectra.frequency))
+            spectra = function(times, **prior.sample())
+            self.assertEqual((len(spectra.time), len(spectra.lambdas)), np.shape(spectra.spectra))
