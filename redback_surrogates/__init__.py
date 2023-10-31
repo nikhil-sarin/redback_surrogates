@@ -1,1 +1,1 @@
-from redback_surrogates import utils
+from redback_surrogates import utils, afterglowmodels, kilonovamodels, model_library, supernovamodels
