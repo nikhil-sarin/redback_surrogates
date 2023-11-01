@@ -11,7 +11,7 @@ def shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency):
         test_data= []
         for f in frequency:
             test_data.append([np.log10(thv) , loge0 , np.log10(thc), logn0, p, logepse, logepsb, np.log10(g0), f])
-    return test_data      
+    return np.array(test_data)    
 
 with open(f"{dirname}/surrogate_data/onax_redback.pkl", "rb") as f_on:
     model_on = pickle.load(f_on)
