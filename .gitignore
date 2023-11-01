@@ -4,4 +4,4 @@
 *.pyc
 /*.egg-info
 *.DS_Store
-*.spyproject
+*.spyproject/
