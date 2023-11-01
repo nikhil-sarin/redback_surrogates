@@ -6,11 +6,11 @@ dirname = os.path.dirname(__file__)
 
 def shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency):
     if isinstance(frequency, (int, float)) == True:
-        test_data= np.array([np.log10(thv) , loge0 , np.log10(thc), logn0, p, logepse, logepsb, np.log10(g0), np.log10(frequency)]).reshape(1,-1)
+        test_data= np.array([np.log10(thv) , loge0 , np.log10(thc), logn0, p, logepse, logepsb, np.log10(g0), frequency]).reshape(1,-1)
     else:
         test_data= []
         for f in frequency:
-            test_data.append([np.log10(thv) , loge0 , np.log10(thc), logn0, p, logepse, logepsb, np.log10(g0), np.log10(f)])
+            test_data.append([np.log10(thv) , loge0 , np.log10(thc), logn0, p, logepse, logepsb, np.log10(g0), f])
     return test_data      
 
 with open(f"{dirname}/surrogate_data/onax_redback.pkl", "rb") as f_on:
@@ -20,7 +20,7 @@ with open(f"{dirname}/surrogate_data/onax_scalery.pkl", "rb") as sy_on:
 with open(f"{dirname}/surrogate_data/onax_scalerx.pkl", "rb") as sx_on:
     scalerx_on = pickle.load(sx_on) 
 
-def onax_tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0,**kwargs):
+def onax_tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, frequency):
     """
     tophat afterglow model using trained mpl regressor
 
@@ -33,11 +33,10 @@ def onax_tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, 
     :param logepse: log10 fraction of thermal energy in electrons
     :param logepsb: log10 fraction of thermal energy in magnetic field
     :param g0: initial lorentz factor
-    :param kwargs: Additional keyword arguments
     :param frequency: frequency of the band to view in- single number or same length as time array
     :return: flux density at each time for given frequency
     """
-    frequency=kwargs['frequency']
+
     test_data = shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency)
     
     logtime= np.logspace(2.94,7.41,100)/86400
@@ -60,7 +59,7 @@ with open(f"{dirname}/surrogate_data/offax_scalery.pkl", "rb") as sy_off:
 with open(f"{dirname}/surrogate_data/offax_scalerx.pkl", "rb") as sx_off:
     scalerx_off = pickle.load(sx_off) 
 
-def offax_tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0,**kwargs):
+def offax_tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, frequency):
     """
     tophat afterglow model using trained mpl regressor
 
@@ -73,11 +72,10 @@ def offax_tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb,
     :param logepse: log10 fraction of thermal energy in electrons
     :param logepsb: log10 fraction of thermal energy in magnetic field
     :param g0: initial lorentz factor
-    :param kwargs: Additional keyword arguments
     :param frequency: frequency of the band to view in- single number or same length as time array
     :return: flux density at each time for given frequency
     """
-    frequency=kwargs['frequency']
+    
     test_data = shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency)
     
     logtime= np.logspace(2.94,7.41,100)/86400
