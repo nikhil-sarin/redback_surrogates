@@ -29,7 +29,7 @@ class TestModels(unittest.TestCase):
             model_name = f.replace(".prior", "")
             prior = self.get_prior(file=f)
             function = redback_surrogates.model_library.all_models_dict[model_name]
-            if model_name in ['onax_tophat_emulator', 'offax_tophat_emulator']:
+            if model_name == 'tophat_emulator':
                 flux_density =  function(times, **prior.sample())
                 self.assertEqual(len(times), len(flux_density), flux_density.shape)
             elif model_name in ['bulla_bns_kilonovanet_spectra', 'bulla_nsbh_kilonovanet_spectra', 'kasen_bns_kilonovanet_spectra']:
