@@ -4,3 +4,5 @@
 *.pyc
 /*.egg-info
 *.DS_Store
+*.spyproject/*
+*.ipynb_checkpoints
