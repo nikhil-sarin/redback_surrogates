@@ -1,5 +1,11 @@
 # All notable changes will be documented in this file
 
+## [0.2.1] 2023-11-24
+Version 0.2.1 release of `redback_surrogates`
+
+### Changed
+- Minor changes to the documentation/interface for afterglow emulator.
+
 ## [0.2] 2023-11-24
 Version 0.2 release of `redback_surrogates`
 
