@@ -13,7 +13,7 @@ Introducing REDBACK, a bayesian inference software package for fitting electroma
 
 ### Online documentation for `Redback_surrogates`
 
-- [Installation](https://redback_surrogates.readthedocs.io/en/latest/)
+- [Installation](https://redback-surrogates.readthedocs.io/en/latest/installation.html)
 - [Examples](https://github.com/nikhil-sarin/redback_surrogates/tree/master/examples)
 - [Documentation](https://redback-surrogates.readthedocs.io/en/latest/)
 
