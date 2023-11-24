@@ -15,16 +15,3 @@ Welcome to redback_surrogates's documentation!
 
 
 .. currentmodule:: redback_surrogates
-
-API:
-----
-
-.. autosummary::
-   :toctree: api
-   :caption: API:
-   :recursive:
-
-   utils
-   kilonovamodels
-   afterglowmodels
-   supernovamodels
