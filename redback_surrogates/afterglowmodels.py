@@ -2,6 +2,7 @@ import pickle
 from scipy import interpolate
 import numpy as np
 import os
+from redback_surrogates.utils import citation_wrapper
 dirname = os.path.dirname(__file__)
 
 with open(f"{dirname}/surrogate_data/onax_redback.pkl", "rb") as f_on:
@@ -26,7 +27,8 @@ def _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency):
         for f in frequency:
             test_data.append([np.log10(thv) , loge0 , np.log10(thc), logn0, p, logepse, logepsb, np.log10(g0), f])
     return np.array(test_data)    
-    
+
+@citation_wrapper("Wallace and Sarin in prep.")
 def tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, **kwargs):
     """
     tophat afterglow model using trained mpl regressor
@@ -49,17 +51,17 @@ def tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, *
     test_data = _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency)
     logtime = np.logspace(2.94,7.41,100)/86400
 
-    if thv<=thc:
+    if thv <= thc:
         xtests = scalerx_on.transform(test_data)
         prediction = model_on.predict(xtests)
         prediction = np.exp(scalery_on.inverse_transform(prediction))
-    elif thv>thc:
+    else:
         xtests = scalerx_off.transform(test_data)
         prediction = model_off.predict(xtests)
         prediction = np.exp(scalery_off.inverse_transform(prediction))
 
     afterglow = interpolate.interp1d(logtime, prediction, kind='linear', fill_value='extrapolate')
-    fluxd= afterglow(new_time)
+    fluxd = afterglow(new_time)
     
     if test_data.shape == (1,9):
         return fluxd[0]
