@@ -3,7 +3,7 @@ This is an optional package built to be used via [Redback](https://redback.readt
 This package contains the data and methods to build/call surrogate models for EM transients using machine learning built on grids of numerical simulations.
 If your aim is to just evaluate the models you could use this package independently but if you wish to simulate realistic transients or perform inference with these models, use [Redback](https://redback.readthedocs.io/en/latest/)
 
-[![Documentation Status](https://readthedocs.org/projects/redback_surrogates/badge/?version=latest)](https://redback_surrogates.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/redback-surrogates/badge/?version=latest)](https://redback-surrogates.readthedocs.io/en/latest/?badge=latest)
 ![Python package](https://github.com/nikhil-sarin/redback_surrogates/workflows/Python%20application/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/nikhil-sarin/redback_surrogates/badge.svg?branch=main)](https://coveralls.io/github/nikhil-sarin/redback_surrogates?branch=main)
 ![PyPI](https://img.shields.io/pypi/v/redback_surrogates)
