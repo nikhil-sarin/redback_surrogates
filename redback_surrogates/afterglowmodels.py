@@ -20,9 +20,9 @@ with open(f"{dirname}/surrogate_data/offax_scalerx.pkl", "rb") as sx_off:
 
 def _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency):
     if isinstance(frequency, (int, float)) == True:
-        test_data= np.array([np.log10(thv) , loge0 , np.log10(thc), logn0, p, logepse, logepsb, np.log10(g0), frequency]).reshape(1,-1)
+        test_data = np.array([np.log10(thv) , loge0 , np.log10(thc), logn0, p, logepse, logepsb, np.log10(g0), frequency]).reshape(1,-1)
     else:
-        test_data= []
+        test_data = []
         for f in frequency:
             test_data.append([np.log10(thv) , loge0 , np.log10(thc), logn0, p, logepse, logepsb, np.log10(g0), f])
     return np.array(test_data)    
@@ -45,15 +45,15 @@ def tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, f
     """
     
     test_data = _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency)
-    logtime= np.logspace(2.94,7.41,100)/86400
+    logtime = np.logspace(2.94,7.41,100)/86400
     
     if thv<=thc:
-        xtests= scalerx_on.transform(test_data)
-        prediction= model_on.predict(xtests)
+        xtests = scalerx_on.transform(test_data)
+        prediction = model_on.predict(xtests)
         prediction = np.exp(scalery_on.inverse_transform(prediction))
     elif thv>thc:
-        xtests= scalerx_off.transform(test_data)
-        prediction= model_off.predict(xtests)
+        xtests = scalerx_off.transform(test_data)
+        prediction = model_off.predict(xtests)
         prediction = np.exp(scalery_off.inverse_transform(prediction))
 
     afterglow = interpolate.interp1d(logtime, prediction, kind='linear', fill_value='extrapolate')
