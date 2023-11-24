@@ -21,10 +21,10 @@ API:
 
 .. autosummary::
    :toctree: api
-   :template: custom-module-template.rst
    :caption: API:
    :recursive:
 
+   utils
+   kilonovamodels
    afterglowmodels
    supernovamodels
-   kilonovamodels
