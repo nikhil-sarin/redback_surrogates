@@ -24,6 +24,7 @@ author = 'Nikhil Sarin'
 # The full version, including alpha/beta/rc tags
 release = 'alpha'
 autosummary_generate = True
+autodoc_mock_imports = ["bilby"]
 
 source_suffix = ['.rst', '.md', '.txt', '.ipynb', '.py']
 # -- General configuration ---------------------------------------------------
