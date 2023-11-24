@@ -27,7 +27,7 @@ def _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency):
             test_data.append([np.log10(thv) , loge0 , np.log10(thc), logn0, p, logepse, logepsb, np.log10(g0), f])
     return np.array(test_data)    
     
-def tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, frequency):
+def tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, **kwargs):
     """
     tophat afterglow model using trained mpl regressor
 
@@ -40,13 +40,15 @@ def tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, f
     :param logepse: log10 fraction of thermal energy in electrons
     :param logepsb: log10 fraction of thermal energy in magnetic field
     :param g0: initial lorentz factor
+    :param kwargs: extra arguments for the model
     :param frequency: frequency of the band to view in- single number or same length as time array
     :return: flux density at each time for given frequency
     """
-    
+
+    frequency = kwargs['frequency']
     test_data = _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency)
     logtime = np.logspace(2.94,7.41,100)/86400
-    
+
     if thv<=thc:
         xtests = scalerx_on.transform(test_data)
         prediction = model_on.predict(xtests)
