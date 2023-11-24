@@ -11,23 +11,21 @@ Specifically, the surrogate models included in this package are:
 
 - Afterglow models
 
-    - Surrogate built on top of `jetfit <https://github.com/NYU-CAL/JetFit>`_.
-    - Surrogate built on top of `boxfit <https://cosmo.nyu.edu/afterglowlibrary/index.html>`_.
+    - Surrogate built on top of `tophat_redback <https://redback.readthedocs.io/en/latest/api/redback.transient_models.afterglow_models.tophat_redback.html#redback.transient_models.afterglow_models.tophat_redback>`_.
 
 - Kilonova models
 
     - Surrogate for Kasen BNS using `kilonovanet <https://github.com/klukosiute/kilonovanet>`_.
     - Surrogate for Bulla BNS using `kilonovanet <https://github.com/klukosiute/kilonovanet>`_.
     - Surrogate for Bulla NSBH using `kilonovanet <https://github.com/klukosiute/kilonovanet>`_.
-    - Surrogate for Kedia2022 BNS
 
  - Tidal disruption models
 
-    - Surrogate from numerical simulation (`<https://ui.adsabs.harvard.edu/abs/2019ApJ...872..151M/abstract>`_).
+    - Surrogate from numerical simulation (`<https://ui.adsabs.harvard.edu/abs/2019ApJ...872..151M/abstract>`_) (Not yet implemented into master).
 
 - Supernova models
 
-    - Surrogate for r-process from collapsars (`Barnes and Metzger 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...939L..29B/abstract>`_).
+    - Surrogate for r-process from collapsars (`Barnes and Metzger 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...939L..29B/abstract>`_) (Not yet implemented into master).
 
 For a full upto date list of models implemented in :code:`redback_surrogates`, look at the `API <https://redback_surrogates.readthedocs.io/en/latest/>`_.
 Note that many of these models can either output the spectra or the magnitude/flux at specific bands due to the limitations of the surrogates. These are noted in the documentation but for models with spectra,
@@ -67,7 +65,7 @@ The priors are simply a dictionary so users could also just pass a dictionary/da
 Furthermore, we can also place arbitrary constraints on the priors to make a really specific population/simulation.
 For example, we could make a constraint that all priors in the population were brighter than 24th mag at peak or something else.
 Almost any time of constraint is possible, as long as it can be written mathematically.
-Please look through the :code:`redback` documentation for more details on how to do this extra tricks.
+Please look through the :code:`redback` documentation for more details on how to do these extra tricks.
 
 Note that with surrogates, the prior ranges are determined by the trained model. Setting priors outside this validity domain will either not work or potentially give unreliable results.
 We recommend using the priors provided by :code:`redback` for the models in :code:`redback_surrogates` to avoid this issue.
