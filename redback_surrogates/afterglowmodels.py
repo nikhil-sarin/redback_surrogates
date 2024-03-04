@@ -6,11 +6,11 @@ from redback_surrogates.utils import citation_wrapper
 dirname = os.path.dirname(__file__)
 
 
-with open(f"{dirname}/surrogate_data/regressor_test2.pkl", "rb") as f:
+with open(f"{dirname}/surrogate_data/tophat_redback_400x2.pkl", "rb") as f:
     model = pickle.load(f)
-with open(f"{dirname}/surrogate_data/scaley_test2.pkl", "rb") as sy:
+with open(f"{dirname}/surrogate_data/tophat_redback_scaley.pkl", "rb") as sy:
     scalerY= pickle.load(sy)
-with open(f"{dirname}/surrogate_data/scalex_test2.pkl", "rb") as sx:
+with open(f"{dirname}/surrogate_data/tophat_redback_scalex.pkl", "rb") as sx:
     scalerX = pickle.load(sx) 
 
 def _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency):
