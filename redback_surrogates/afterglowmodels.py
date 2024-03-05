@@ -5,19 +5,13 @@ import os
 from redback_surrogates.utils import citation_wrapper
 dirname = os.path.dirname(__file__)
 
-with open(f"{dirname}/surrogate_data/onax_redback.pkl", "rb") as f_on:
-    model_on = pickle.load(f_on)
-with open(f"{dirname}/surrogate_data/onax_scalery.pkl", "rb") as sy_on:
-    scalery_on = pickle.load(sy_on)
-with open(f"{dirname}/surrogate_data/onax_scalerx.pkl", "rb") as sx_on:
-    scalerx_on = pickle.load(sx_on) 
-    
-with open(f"{dirname}/surrogate_data/offax_redback.pkl", "rb") as f_off:
-    model_off = pickle.load(f_off)
-with open(f"{dirname}/surrogate_data/offax_scalery.pkl", "rb") as sy_off:
-    scalery_off = pickle.load(sy_off)
-with open(f"{dirname}/surrogate_data/offax_scalerx.pkl", "rb") as sx_off:
-    scalerx_off = pickle.load(sx_off) 
+
+with open(f"{dirname}/surrogate_data/tophat_redback_400x2.pkl", "rb") as f:
+    model = pickle.load(f)
+with open(f"{dirname}/surrogate_data/tophat_redback_scaley.pkl", "rb") as sy:
+    scalerY= pickle.load(sy)
+with open(f"{dirname}/surrogate_data/tophat_redback_scalex.pkl", "rb") as sx:
+    scalerX = pickle.load(sx) 
 
 def _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency):
     if isinstance(frequency, (int, float)) == True:
@@ -28,7 +22,8 @@ def _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency):
             test_data.append([np.log10(thv) , loge0 , np.log10(thc), logn0, p, logepse, logepsb, np.log10(g0), f])
     return np.array(test_data)    
 
-@citation_wrapper("Wallace and Sarin in prep.")
+    
+@citation_wrapper("Wallace and Sarin in prep.")   
 def tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, **kwargs):
     """
     tophat afterglow model using trained mpl regressor
@@ -46,20 +41,15 @@ def tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, *
     :param frequency: frequency of the band to view in- single number or same length as time array
     :return: flux density at each time for given frequency
     """
-
+    
     frequency = kwargs['frequency']
     test_data = _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency)
     logtime = np.logspace(2.94,7.41,100)/86400
-
-    if thv <= thc:
-        xtests = scalerx_on.transform(test_data)
-        prediction = model_on.predict(xtests)
-        prediction = np.exp(scalery_on.inverse_transform(prediction))
-    else:
-        xtests = scalerx_off.transform(test_data)
-        prediction = model_off.predict(xtests)
-        prediction = np.exp(scalery_off.inverse_transform(prediction))
-
+    
+    xtests = scalerX.transform(test_data)
+    prediction = model.predict(xtests)
+    prediction = np.exp(scalerY.inverse_transform(prediction))
+    
     afterglow = interpolate.interp1d(logtime, prediction, kind='linear', fill_value='extrapolate')
     fluxd = afterglow(new_time)
     
