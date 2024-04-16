@@ -39,7 +39,7 @@ def tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, *
     :param logepsb: log10 fraction of thermal energy in magnetic field
     :param g0: initial lorentz factor
     :param kwargs: extra arguments for the model
-    :param frequency: frequency of the band to view in- single number or same length as time array
+    :param frequency: frequency of the band to view in- single number or same length as time array (in log10 hz)
     :return: flux density at each time for given frequency
     """
     
