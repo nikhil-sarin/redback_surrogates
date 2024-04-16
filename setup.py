@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(name='redback_surrogates',
-      version='0.2.1',
+      version='0.2.2',
       description='A surrogates package to work with redback, the bayesian inference package for electromagnetic transients',
       long_description=long_description,
       long_description_content_type="text/markdown",

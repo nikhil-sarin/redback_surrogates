@@ -1,5 +1,11 @@
 # All notable changes will be documented in this file
 
+## [0.2.2] 2024-04-16
+Version 0.2.2 release of `redback_surrogates`
+
+### Changed
+- Emulator trained on a denser array with some additional fixes
+
 ## [0.2.1] 2023-11-24
 Version 0.2.1 release of `redback_surrogates`
 
