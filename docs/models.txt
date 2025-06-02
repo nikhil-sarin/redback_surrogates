@@ -19,17 +19,36 @@ Specifically, the surrogate models included in this package are:
     - Surrogate for Bulla BNS using `kilonovanet <https://github.com/klukosiute/kilonovanet>`_.
     - Surrogate for Bulla NSBH using `kilonovanet <https://github.com/klukosiute/kilonovanet>`_.
 
- - Tidal disruption models
-
-    - Surrogate from numerical simulation (`<https://ui.adsabs.harvard.edu/abs/2019ApJ...872..151M/abstract>`_) (Not yet implemented into master).
-
 - Supernova models
 
     - Surrogate for r-process from collapsars (`Barnes and Metzger 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...939L..29B/abstract>`_) (Not yet implemented into master).
+    - Surrogates for Type II supernovae (Sarin et al. 2025), based on simulations in `Moriya et al. 2024 <https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract>`_
 
 For a full upto date list of models implemented in :code:`redback_surrogates`, look at the `API <https://redback_surrogates.readthedocs.io/en/latest/>`_.
 Note that many of these models can either output the spectra or the magnitude/flux at specific bands due to the limitations of the surrogates. These are noted in the documentation but for models with spectra,
-we recommend using these models through :code:`redback` package as that provides the interface to convert the spectra to magnitudes/fluxes using SNcosmo.
+we recommend using these models through :code:`redback` package as that provides the interface to convert the spectra to magnitudes/fluxes.
+
+Downloading additional data
+-------------------------
+
+Some models in :code:`redback_surrogates` require additional data to be downloaded before they can be used. This can be done simply by using the :code:`redback_surrogates.download_data()` function.
+This function will download the data required for all models in :code:`redback_surrogates` that require additional data.
+
+.. code:: python
+
+    import redback_surrogates as rs
+    data_dir = rs.data_management.download_surrogate_data()
+    if data_dir:
+        print(f"Surrogate data is available at: {data_dir}")
+
+This will download the data to the surrogate_data folder where redback_surrogates is installed.
+The files are hosted on Zenodo, and the download will be cached so that it does not need to be downloaded again and checked against a hash to ensure integrity.
+
+Contributing new models
+-------------------------
+
+If you want to contribute a new model to :code:`redback_surrogates`, please follow the instructions in the `contributing guide <https://redback.readthedocs.io/en/latest/contributing.html>`_.
+If your surrogate model requires additional data e.g., large torch files to be used, please ensure that you provide a way to download this data using the :code:`download_surrogate_data()` function.
 
 Using :code:`redback_surrogate` models as functions
 -------------------------
