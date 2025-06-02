@@ -1,0 +1,14 @@
+name: rtd
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - setuptools
+  - sphinx-tabs
+  - sphinx-rtd-theme
+  - numpy<2.0
+  - astropy
+  - matplotlib
+  - pandas
+  - scipy
