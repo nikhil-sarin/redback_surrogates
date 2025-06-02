@@ -1,5 +1,12 @@
 # All notable changes will be documented in this file
 
+## [0.2.3] 2025-06-02
+Version 0.2.3 release of `redback_surrogates`
+
+### Added
+- Surrogate model for Type II supernovae, based on Sarin et al. 2025.
+- Data management module to download and extract surrogate data from zenodo releases.
+
 ## [0.2.2] 2024-04-16
 Version 0.2.2 release of `redback_surrogates`
 
