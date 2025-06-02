@@ -34,11 +34,9 @@ Redback is a software package for end-to-end interpretation and parameter estima
 - [Bilby](https://lscsoft.docs.ligo.org/bilby/index.html) under the hood. Can easily switch samplers/likelihoods etc. By default the choice is made depending on the data.
 - Fitting returns a homogenous result object, with functionality to plot lightcurves and the posterior/evidence etc.
 
-### Contributing 
-Redback is currently in alpha with a paper in preparation. 
+### Contributing
 If you are interested in contributing please join the redback 
 [slack](https://join.slack.com/t/redback-group/shared_invite/zt-2n735gnnl-EUuZKv5Db2kHVuSKbwUo2Q)
-and email [Nikhil Sarin](mailto:nsarin.astro@gmail.com?subject=Contributing%20to%20redback). 
-All contributors at the alpha stage will be invited to be co-authors of the first paper.
+and email [Nikhil Sarin](mailto:nsarin.astro@gmail.com?subject=Contributing%20to%20redback).
 
-To make changes to redback, we require users to use a merge request system. 
+To make changes to redback, we require users to use pull requests. 
