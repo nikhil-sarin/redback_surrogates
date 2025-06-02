@@ -58,6 +58,7 @@ This means that users can simply use these functions by themselves as you would 
 All users need to do is pass into the function a time array and any other parameter required by the function.
 Note that we are showing the interface through :code:`redback` here to take advantage of :code:`redback` allowing output in any band/output_format.
 The raw spectra interface is available through :code:`redback_surrogates` as well.
+Please look at the examples and the API documentation for more details on how to use the models directly through :code:`redback_surrogates`.
 
 For example:
 
@@ -88,6 +89,7 @@ Please look through the :code:`redback` documentation for more details on how to
 
 Note that with surrogates, the prior ranges are determined by the trained model. Setting priors outside this validity domain will either not work or potentially give unreliable results.
 We recommend using the priors provided by :code:`redback` for the models in :code:`redback_surrogates` to avoid this issue.
+Reading the papers is generally a nice place to start :)
 
 
 
