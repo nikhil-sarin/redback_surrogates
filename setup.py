@@ -29,6 +29,7 @@ setup(name='redback_surrogates',
       ],
       extras_require={
           'all': [
+              "bilby"
               "tensorflow"
           ]
       },
