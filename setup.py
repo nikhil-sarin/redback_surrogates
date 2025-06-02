@@ -16,21 +16,21 @@ setup(name='redback_surrogates',
       package_dir={'redback_surrogates': 'redback_surrogates', },
       package_data={'redback_surrogates': ['surrogate_data/*']},
       install_requires=[
-          "setuptools"
-          "numpy==1.26.0"
-          "pandas"
-          "scipy"
-          "scikit_learn"
-          "matplotlib"
-          "lxml"
-          "sphinx-rtd-theme"
-          "sphinx-tabs"
-          "kilonovanet"
+          "setuptools",
+          "numpy==1.26.0",
+          "pandas",
+          "scipy",
+          "scikit_learn",
+          "matplotlib",
+          "lxml",
+          "sphinx-rtd-theme",
+          "sphinx-tabs",
+          "kilonovanet",
       ],
       extras_require={
           'all': [
-              "bilby"
-              "tensorflow"
+              "bilby",
+              "tensorflow",
           ]
       },
       python_requires=">=3.10",
