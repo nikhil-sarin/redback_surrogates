@@ -1,11 +1,17 @@
+from collections import namedtuple
 from redback_surrogates.utils import citation_wrapper
+from joblib import load
+import keras
 import tensorflow as tf
-tf.config.set_visible_devices([], "GPU")
-import os
-dirname = os.path.dirname(__file__)
 import numpy as np
 import pandas as pd
+import astropy.units as uu
 
+import os
+dirname = os.path.dirname(__file__)
+data_folder = os.path.join(dirname, "surrogate_data")
+
+@citation_wrapper("Sarin et al. 2025, in prep. https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
 class EnhancedSpectralModel:
     def __init__(self, latent_dim=64, learning_rate=1e-3, use_pca=True, pca_components=32):
         """Initialize the enhanced spectral model with optimized parameters
@@ -73,8 +79,51 @@ class EnhancedSpectralModel:
 
         return spectrum
 
+    def inverse_preprocess_flux(self, scaled_flux):
+        """Convert scaled flux back to original scale
+
+        Args:
+            scaled_flux: Scaled flux arrays
+
+        Returns:
+            Original scale flux arrays
+        """
+        if self.flux_scaler is None:
+            print("Warning: flux_scaler not found, returning unscaled data")
+            return scaled_flux
+
+        # Reshape to 2D for inverse scaling
+        orig_shape = scaled_flux.shape
+        flux_2d = scaled_flux.reshape(orig_shape[0], -1)
+
+        # Apply inverse scaling
+        orig_2d = self.flux_scaler.inverse_transform(flux_2d)
+
+        # Reshape back to original shape
+        orig_flux = orig_2d.reshape(orig_shape)
+
+        return orig_flux
+
+    def inverse_scale_latent(self, scaled_latent):
+        """Convert scaled latent values back to original scale
+
+        Args:
+            scaled_latent: Scaled latent values
+
+        Returns:
+            Original scale latent values
+        """
+        if self.latent_scaler is None:
+            print("Warning: latent_scaler not found, returning unscaled data")
+            return scaled_latent
+
+        # Apply inverse scaling
+        original_latent = self.latent_scaler.inverse_transform(scaled_latent)
+
+        return original_latent
+
     @classmethod
-    def load_model(cls, directory='enhanced_spectral_model'):
+    def load_model(cls, directory=data_folder + '/TypeII_Moriya'):
         """Load saved model from disk
 
         Args:
@@ -124,24 +173,27 @@ class EnhancedSpectralModel:
 
         return model
 
-
-def lbol_vec(progenitor, ni_mass, mdot, beta, rcsm, esn, **kwargs):
+@citation_wrapper("Sarin et al. 2025, in prep. https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
+def typeII_lbol(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
     """
+    Generate bolometric light curve for Type II supernovae based on physical parameters (vectorised)
 
     :param progenitor: in solar masses
     :param ni_mass: in solar masses
-    :param mdot: in 10^{-x} solar masses per year so x is the number
+    :param log10_mdot: in solar masses per year
     :param beta: dimensionless
     :param rcsm: in 10^14 cm
     :param esn: in 10^51
-    :param kwargs:
+    :param kwargs: None
     :return: tts (in days in source frame) and bolometric luminosity (in erg/s)
     """
     rcsm = rcsm * 1e14
-    lbolscaler = load('May2025_processed_data/lbolscaler.save')
-    lbol_model = keras.saving.load_model('May2025_processed_data/lbol_model.keras')
+    log10_mdot = np.abs(log10_mdot)
+    lbolscaler = load(data_folder + '/TypeII_Moriya/lbolscaler.save')
+    lbol_model = keras.saving.load_model(data_folder + '/TypeII_Moriya/lbol_model.keras')
+    xscaler = load(data_folder + '/TypeII_Moriya/xscaler.save')
     tts = np.geomspace(1e-1, 400, 200)
-    ss = np.array([progenitor, ni_mass, mdot, beta, rcsm, esn]).T
+    ss = np.array([progenitor, ni_mass, log10_mdot, beta, rcsm, esn]).T
     if isinstance(progenitor, float):
         ss = ss.reshape(1, -1)
     ss = xscaler.transform(ss)
@@ -151,25 +203,30 @@ def lbol_vec(progenitor, ni_mass, mdot, beta, rcsm, esn, **kwargs):
         lbols = lbols.flatten()
     return tts, 10**lbols
 
-def photosphere_vec(progenitor, ni_mass, mdot, beta, rcsm, esn, **kwargs):
+@citation_wrapper("Sarin et al. 2025, in prep. https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
+def typeII_photosphere(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
     """
+    Generate synthetic photospheric temperature and radius for Type II supernovae based on physical parameters.
+    (vectorised)
 
     :param progenitor: in solar masses
     :param ni_mass: in solar masses
-    :param mdot: in 10^{-x} solar masses per year so x is the number
+    :param log10_mdot: in solar masses per year
     :param beta: dimensionless
     :param rcsm: in 10^14 cm
     :param esn: in 10^51
-    :param kwargs:
+    :param kwargs: None
     :return: tts (in days in source frame) and temp (in K) and radius (in cm)
     """
     rcsm = rcsm * 1e14
-    tempscaler = load('May2025_processed_data/temperature_scaler.save')
-    radscaler = load("May2025_processed_data/radius_scaler.save")
-    temp_model = keras.saving.load_model('May2025_processed_data/temp_model.keras')
-    rad_model = keras.saving.load_model('May2025_processed_data/radius_model.keras')
+    log10_mdot = np.abs(log10_mdot)
+    xscaler = load(data_folder + '/TypeII_Moriya/xscaler.save')
+    tempscaler = load(data_folder + '/TypeII_Moriya/temperature_scaler.save')
+    radscaler = load(data_folder + '/TypeII_Moriya/radius_scaler.save')
+    temp_model = keras.saving.load_model(data_folder + '/TypeII_Moriya/temp_model.keras')
+    rad_model = keras.saving.load_model(data_folder + '/TypeII_Moriya/radius_model.keras')
     tts = np.geomspace(1e-1, 400, 200)
-    ss = np.array([progenitor, ni_mass, mdot, beta, rcsm, esn]).T
+    ss = np.array([progenitor, ni_mass, log10_mdot, beta, rcsm, esn]).T
     if isinstance(progenitor, float):
         ss = ss.reshape(1, -1)
     ss = xscaler.transform(ss)
@@ -181,3 +238,48 @@ def photosphere_vec(progenitor, ni_mass, mdot, beta, rcsm, esn, **kwargs):
         temp = temp.flatten()
         rad = rad.flatten()
     return tts, temp, rad
+
+@citation_wrapper("Sarin et al. 2025, in prep. https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
+def typeII_spectra(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
+    """
+    Generate synthetic spectra for Type II supernovae based on physical parameters.
+
+    :param progenitor: in solar masses
+    :param ni_mass: in solar masses
+    :param log10_mdot: in solar masses per year
+    :param beta: dimensionless
+    :param rcsm: in 10^14 cm
+    :param esn: in 10^51
+    :param kwargs: None
+    :return: rest-frame spectrum (luminosity density), frequency (in Angstrom) and time arrays and times (in days in source frame)
+    """
+    rcsm = rcsm * 1e14
+    log10_mdot = np.abs(log10_mdot)
+    # Create standard grids
+    standard_times = np.geomspace(0.1, 400, 50)
+    standard_freqs = np.geomspace(500, 49500, 50)
+
+    # Create parameter dataframe for the surrogate model
+    new_params = pd.DataFrame([{
+        'progenitor': progenitor,
+        'ni_mass': ni_mass,
+        'mass_loss': log10_mdot,
+        'beta': beta,
+        'csm_radius': rcsm,
+        'explosion_energy': esn
+    }])
+
+    # Get the predicted spectrum in rest frame
+    model = EnhancedSpectralModel.load_model()
+    predicted_spectrum = model.predict_spectrum(new_params)
+    # Apply empirical correction factor (if needed)
+    predicted_spectrum = 10 ** predicted_spectrum
+    # Convert to physical units (erg/s/Hz)
+    rest_spectrum = predicted_spectrum * uu.erg / uu.s / uu.Hz
+
+    output = namedtuple('output', ['spectrum', 'frequency', 'time'])
+    return output(
+        spectrum=rest_spectrum,
+        frequency=standard_freqs * uu.Angstrom,
+        time=standard_times * uu.day
+    )
