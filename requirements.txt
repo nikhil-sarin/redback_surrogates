@@ -1,9 +1,1 @@
-setuptools
-numpy
-pandas
-scipy
-scikit_learn
-matplotlib
-lxml
-sphinx-rtd-theme
-sphinx-tabs
+.

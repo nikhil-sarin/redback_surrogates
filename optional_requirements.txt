@@ -1,2 +1,1 @@
-kilonovanet
-bilby
+.[all]

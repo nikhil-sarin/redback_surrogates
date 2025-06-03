@@ -29,6 +29,9 @@ class TestModels(unittest.TestCase):
             model_name = f.replace(".prior", "")
             prior = self.get_prior(file=f)
             function = redback_surrogates.model_library.all_models_dict[model_name]
+            if model_name in ['typeII']:
+                print("Skipping {} model test, as it requires extra files".format(model_name))
+                pass
             if model_name == 'tophat_emulator':
                 flux_density =  function(times, **prior.sample())
                 self.assertEqual(len(times), len(flux_density), flux_density.shape)
