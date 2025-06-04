@@ -11,7 +11,7 @@ import os
 dirname = os.path.dirname(__file__)
 data_folder = os.path.join(dirname, "surrogate_data")
 
-@citation_wrapper("Sarin et al. 2025, in prep. https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
+@citation_wrapper("https://ui.adsabs.harvard.edu/abs/2025arXiv250602107S/abstract, https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
 class EnhancedSpectralModel:
     def __init__(self, latent_dim=64, learning_rate=1e-3, use_pca=True, pca_components=32):
         """Initialize the enhanced spectral model with optimized parameters
@@ -173,7 +173,7 @@ class EnhancedSpectralModel:
 
         return model
 
-@citation_wrapper("Sarin et al. 2025, in prep. https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
+@citation_wrapper("https://ui.adsabs.harvard.edu/abs/2025arXiv250602107S/abstract, https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
 def typeII_lbol(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
     """
     Generate bolometric light curve for Type II supernovae based on physical parameters (vectorised)
@@ -203,7 +203,7 @@ def typeII_lbol(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
         lbols = lbols.flatten()
     return tts, 10**lbols
 
-@citation_wrapper("Sarin et al. 2025, in prep. https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
+@citation_wrapper("https://ui.adsabs.harvard.edu/abs/2025arXiv250602107S/abstract, https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
 def typeII_photosphere(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
     """
     Generate synthetic photospheric temperature and radius for Type II supernovae based on physical parameters.
@@ -239,7 +239,7 @@ def typeII_photosphere(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwarg
         rad = rad.flatten()
     return tts, temp, rad
 
-@citation_wrapper("Sarin et al. 2025, in prep. https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
+@citation_wrapper("https://ui.adsabs.harvard.edu/abs/2025arXiv250602107S/abstract, https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
 def typeII_spectra(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
     """
     Generate synthetic spectra for Type II supernovae based on physical parameters.
