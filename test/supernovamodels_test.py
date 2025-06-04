@@ -2,11 +2,369 @@ import unittest
 from unittest.mock import patch, MagicMock, mock_open
 import numpy as np
 import pandas as pd
-import os
-import json
-from collections import namedtuple
-import astropy.units as uu
 
+class TestTypeIICaching(unittest.TestCase):
+
+    def setUp(self):
+        """Set up test fixtures and clear caches before each test."""
+        # Import the functions and clear caches
+        from redback_surrogates.supernovamodels import (
+            typeII_lbol, typeII_photosphere, typeII_spectra,
+            _load_lbol_models, _load_photosphere_models, _load_spectra_model,
+            clear_typeII_model_cache
+        )
+
+        self.typeII_lbol = typeII_lbol
+        self.typeII_photosphere = typeII_photosphere
+        self.typeII_spectra = typeII_spectra
+        self._load_lbol_models = _load_lbol_models
+        self._load_photosphere_models = _load_photosphere_models
+        self._load_spectra_model = _load_spectra_model
+        self.clear_typeII_model_cache = clear_typeII_model_cache
+
+        # Clear all caches before each test
+        self.clear_typeII_model_cache()
+
+    def tearDown(self):
+        """Clear caches after each test."""
+        self.clear_typeII_model_cache()
+
+    @patch('redback_surrogates.supernovamodels.load')
+    @patch('redback_surrogates.supernovamodels.keras.saving.load_model')
+    def test_lbol_models_cached(self, mock_keras_load, mock_joblib_load):
+        """Test that lbol models are loaded only once and cached."""
+        # Setup mocks
+        mock_lbol_scaler = MagicMock()
+        mock_lbol_model = MagicMock()
+        mock_x_scaler = MagicMock()
+
+        mock_joblib_load.side_effect = [mock_lbol_scaler, mock_x_scaler]
+        mock_keras_load.return_value = mock_lbol_model
+
+        # Setup mock behaviors
+        mock_x_scaler.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]])
+        mock_lbol_model.return_value = np.random.rand(1, 200)
+        mock_lbol_scaler.inverse_transform.return_value = np.random.rand(200)
+
+        # Call the function multiple times
+        params = (15.0, 0.05, -3.0, 1.0, 5.0, 1.0)
+
+        result1 = self.typeII_lbol(*params)
+        result2 = self.typeII_lbol(*params)
+        result3 = self.typeII_lbol(*params)
+
+        # Verify models were loaded only once
+        self.assertEqual(mock_joblib_load.call_count, 2)  # lbolscaler + xscaler
+        self.assertEqual(mock_keras_load.call_count, 1)  # lbol_model
+
+        # Verify results are consistent
+        np.testing.assert_array_equal(result1[0], result2[0])
+        np.testing.assert_array_equal(result1[0], result3[0])
+
+    @patch('redback_surrogates.supernovamodels.load')
+    @patch('redback_surrogates.supernovamodels.keras.saving.load_model')
+    def test_photosphere_models_cached(self, mock_keras_load, mock_joblib_load):
+        """Test that photosphere models are loaded only once and cached."""
+        # Setup mocks
+        mock_x_scaler = MagicMock()
+        mock_temp_scaler = MagicMock()
+        mock_rad_scaler = MagicMock()
+        mock_temp_model = MagicMock()
+        mock_rad_model = MagicMock()
+
+        mock_joblib_load.side_effect = [mock_x_scaler, mock_temp_scaler, mock_rad_scaler]
+        mock_keras_load.side_effect = [mock_temp_model, mock_rad_model]
+
+        # Setup mock behaviors
+        mock_x_scaler.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]])
+        mock_temp_model.return_value = np.random.rand(1, 200)
+        mock_rad_model.return_value = np.random.rand(1, 200)
+        mock_temp_scaler.inverse_transform.return_value = np.random.rand(200)
+        mock_rad_scaler.inverse_transform.return_value = np.random.rand(200)
+
+        # Call the function multiple times
+        params = (15.0, 0.05, -3.0, 1.0, 5.0, 1.0)
+
+        result1 = self.typeII_photosphere(*params)
+        result2 = self.typeII_photosphere(*params)
+        result3 = self.typeII_photosphere(*params)
+
+        # Verify models were loaded only once
+        self.assertEqual(mock_joblib_load.call_count, 3)  # xscaler + tempscaler + radscaler
+        self.assertEqual(mock_keras_load.call_count, 2)  # temp_model + rad_model
+
+        # Verify results are consistent
+        np.testing.assert_array_equal(result1[0], result2[0])
+        np.testing.assert_array_equal(result1[0], result3[0])
+
+    @patch('redback_surrogates.supernovamodels.EnhancedSpectralModel.load_model')
+    def test_spectra_model_cached(self, mock_load_model):
+        """Test that spectra model is loaded only once and cached."""
+        # Setup mock
+        mock_model = MagicMock()
+        mock_load_model.return_value = mock_model
+
+        # Setup mock behavior
+        mock_spectrum = np.random.rand(50, 50)
+        mock_model.predict_spectrum.return_value = mock_spectrum
+
+        # Call the function multiple times
+        params = (15.0, 0.05, -3.0, 1.0, 5.0, 1.0)
+
+        result1 = self.typeII_spectra(*params)
+        result2 = self.typeII_spectra(*params)
+        result3 = self.typeII_spectra(*params)
+
+        # Verify model was loaded only once
+        mock_load_model.assert_called_once()
+
+        # Verify predict_spectrum was called each time
+        self.assertEqual(mock_model.predict_spectrum.call_count, 3)
+
+        # Verify results have the same structure
+        self.assertTrue(hasattr(result1, 'spectrum'))
+        self.assertTrue(hasattr(result2, 'spectrum'))
+        self.assertTrue(hasattr(result3, 'spectrum'))
+
+    @patch('redback_surrogates.supernovamodels.load')
+    @patch('redback_surrogates.supernovamodels.keras.saving.load_model')
+    def test_cache_independence(self, mock_keras_load, mock_joblib_load):
+        """Test that different function caches are independent."""
+        # Setup mocks for different models
+        mock_lbol_scaler = MagicMock()
+        mock_lbol_model = MagicMock()
+        mock_x_scaler_lbol = MagicMock()
+        mock_x_scaler_photo = MagicMock()
+        mock_temp_scaler = MagicMock()
+        mock_rad_scaler = MagicMock()
+        mock_temp_model = MagicMock()
+        mock_rad_model = MagicMock()
+
+        # Setup side effects for different calls
+        def joblib_side_effect(path):
+            if 'lbolscaler' in path:
+                return mock_lbol_scaler
+            elif 'xscaler' in path:
+                # Return different instances for different functions to test independence
+                if mock_joblib_load.call_count <= 2:  # First two calls for lbol
+                    return mock_x_scaler_lbol
+                else:  # Subsequent calls for photosphere
+                    return mock_x_scaler_photo
+            elif 'temperature' in path:
+                return mock_temp_scaler
+            elif 'radius' in path:
+                return mock_rad_scaler
+
+        def keras_side_effect(path):
+            if 'lbol_model' in path:
+                return mock_lbol_model
+            elif 'temp_model' in path:
+                return mock_temp_model
+            elif 'radius_model' in path:
+                return mock_rad_model
+
+        mock_joblib_load.side_effect = joblib_side_effect
+        mock_keras_load.side_effect = keras_side_effect
+
+        # Setup mock behaviors
+        mock_x_scaler_lbol.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]])
+        mock_x_scaler_photo.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]])
+        mock_lbol_model.return_value = np.random.rand(1, 200)
+        mock_temp_model.return_value = np.random.rand(1, 200)
+        mock_rad_model.return_value = np.random.rand(1, 200)
+        mock_lbol_scaler.inverse_transform.return_value = np.random.rand(200)
+        mock_temp_scaler.inverse_transform.return_value = np.random.rand(200)
+        mock_rad_scaler.inverse_transform.return_value = np.random.rand(200)
+
+        params = (15.0, 0.05, -3.0, 1.0, 5.0, 1.0)
+
+        # Call lbol function twice
+        self.typeII_lbol(*params)
+        self.typeII_lbol(*params)
+
+        # Call photosphere function twice
+        self.typeII_photosphere(*params)
+        self.typeII_photosphere(*params)
+
+        # Verify each cache loaded its models only once
+        # lbol: 2 calls (lbolscaler + xscaler), photosphere: 3 calls (xscaler + tempscaler + radscaler)
+        self.assertEqual(mock_joblib_load.call_count, 5)
+        # lbol: 1 call (lbol_model), photosphere: 2 calls (temp_model + rad_model)
+        self.assertEqual(mock_keras_load.call_count, 3)
+
+    def test_cache_info_functionality(self):
+        """Test that cache info is properly accessible."""
+        # Check that cache functions have cache_info method
+        self.assertTrue(hasattr(self._load_lbol_models, 'cache_info'))
+        self.assertTrue(hasattr(self._load_photosphere_models, 'cache_info'))
+        self.assertTrue(hasattr(self._load_spectra_model, 'cache_info'))
+
+        # Initially, caches should be empty
+        lbol_info = self._load_lbol_models.cache_info()
+        photo_info = self._load_photosphere_models.cache_info()
+        spectra_info = self._load_spectra_model.cache_info()
+
+        self.assertEqual(lbol_info.currsize, 0)
+        self.assertEqual(photo_info.currsize, 0)
+        self.assertEqual(spectra_info.currsize, 0)
+
+    @patch('redback_surrogates.supernovamodels.load')
+    @patch('redback_surrogates.supernovamodels.keras.saving.load_model')
+    def test_cache_clear_functionality(self, mock_keras_load, mock_joblib_load):
+        """Test that cache clearing works properly."""
+        # Setup mocks
+        mock_lbol_scaler = MagicMock()
+        mock_lbol_model = MagicMock()
+        mock_x_scaler = MagicMock()
+
+        mock_joblib_load.side_effect = [mock_lbol_scaler, mock_x_scaler,
+                                        mock_lbol_scaler, mock_x_scaler]  # For after clear
+        mock_keras_load.return_value = mock_lbol_model
+
+        # Setup mock behaviors
+        mock_x_scaler.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]])
+        mock_lbol_model.return_value = np.random.rand(1, 200)
+        mock_lbol_scaler.inverse_transform.return_value = np.random.rand(200)
+
+        params = (15.0, 0.05, -3.0, 1.0, 5.0, 1.0)
+
+        # Call function to populate cache
+        self.typeII_lbol(*params)
+
+        # Check cache is populated
+        cache_info = self._load_lbol_models.cache_info()
+        self.assertEqual(cache_info.currsize, 1)
+        self.assertEqual(mock_joblib_load.call_count, 2)
+        self.assertEqual(mock_keras_load.call_count, 1)
+
+        # Clear cache
+        self.clear_typeII_model_cache()
+
+        # Check cache is cleared
+        cache_info = self._load_lbol_models.cache_info()
+        self.assertEqual(cache_info.currsize, 0)
+
+        # Call function again - should reload models
+        self.typeII_lbol(*params)
+
+        # Check models were loaded again
+        self.assertEqual(mock_joblib_load.call_count, 4)  # 2 initial + 2 after clear
+        self.assertEqual(mock_keras_load.call_count, 2)  # 1 initial + 1 after clear
+
+    @patch('redback_surrogates.supernovamodels.load')
+    @patch('redback_surrogates.supernovamodels.keras.saving.load_model')
+    def test_cache_with_different_parameters(self, mock_keras_load, mock_joblib_load):
+        """Test that caching works correctly with different input parameters."""
+        # Setup mocks
+        mock_lbol_scaler = MagicMock()
+        mock_lbol_model = MagicMock()
+        mock_x_scaler = MagicMock()
+
+        mock_joblib_load.side_effect = [mock_lbol_scaler, mock_x_scaler]
+        mock_keras_load.return_value = mock_lbol_model
+
+        # Setup mock behaviors
+        mock_x_scaler.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]])
+        mock_lbol_model.return_value = np.random.rand(1, 200)
+        mock_lbol_scaler.inverse_transform.return_value = np.random.rand(200)
+
+        # Call with different parameters
+        params1 = (15.0, 0.05, -3.0, 1.0, 5.0, 1.0)
+        params2 = (20.0, 0.1, -2.5, 1.5, 10.0, 2.0)
+        params3 = (15.0, 0.05, -3.0, 1.0, 5.0, 1.0)  # Same as params1
+
+        self.typeII_lbol(*params1)
+        self.typeII_lbol(*params2)
+        self.typeII_lbol(*params3)
+
+        # Models should still be loaded only once despite different parameters
+        self.assertEqual(mock_joblib_load.call_count, 2)
+        self.assertEqual(mock_keras_load.call_count, 1)
+
+        # But the model should be called each time
+        self.assertEqual(mock_lbol_model.call_count, 3)
+
+    @patch('redback_surrogates.supernovamodels.EnhancedSpectralModel.load_model')
+    def test_spectra_model_exception_handling(self, mock_load_model):
+        """Test that exceptions during model loading are handled properly."""
+        # Make the first call raise an exception
+        mock_load_model.side_effect = [Exception("Model loading failed"), MagicMock()]
+
+        params = (15.0, 0.05, -3.0, 1.0, 5.0, 1.0)
+
+        # First call should raise exception
+        with self.assertRaises(Exception):
+            self.typeII_spectra(*params)
+
+        # Cache should not be populated due to exception
+        cache_info = self._load_spectra_model.cache_info()
+        self.assertEqual(cache_info.currsize, 0)
+
+        # Second call should work and reload the model
+        mock_model = MagicMock()
+        mock_model.predict_spectrum.return_value = np.random.rand(50, 50)
+        mock_load_model.side_effect = None
+        mock_load_model.return_value = mock_model
+
+        result = self.typeII_spectra(*params)
+
+        # Should have attempted to load twice
+        self.assertEqual(mock_load_model.call_count, 2)
+        # Cache should now be populated
+        cache_info = self._load_spectra_model.cache_info()
+        self.assertEqual(cache_info.currsize, 1)
+
+
+class TestCachePerformance(unittest.TestCase):
+    """Performance tests for caching functionality."""
+
+    def setUp(self):
+        from redback_surrogates.supernovamodels import clear_typeII_model_cache
+        self.clear_typeII_model_cache = clear_typeII_model_cache
+        self.clear_typeII_model_cache()
+
+    def tearDown(self):
+        self.clear_typeII_model_cache()
+
+    @patch('redback_surrogates.supernovamodels.load')
+    @patch('redback_surrogates.supernovamodels.keras.saving.load_model')
+    def test_cache_performance_benefit(self, mock_keras_load, mock_joblib_load):
+        """Test that caching provides performance benefits."""
+        import time
+        from redback_surrogates.supernovamodels import typeII_lbol
+
+        # Setup mocks with artificial delay to simulate loading time
+        def slow_load(*args, **kwargs):
+            time.sleep(0.01)  # 10ms delay
+            mock = MagicMock()
+            if 'lbol' in str(args[0]):
+                mock.return_value = np.random.rand(1, 200)
+            else:
+                mock.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]])
+                mock.inverse_transform.return_value = np.random.rand(200)
+            return mock
+
+        mock_joblib_load.side_effect = slow_load
+        mock_keras_load.side_effect = slow_load
+
+        params = (15.0, 0.05, -3.0, 1.0, 5.0, 1.0)
+
+        # First call (should load models)
+        start_time = time.time()
+        typeII_lbol(*params)
+        first_call_time = time.time() - start_time
+
+        # Second call (should use cached models)
+        start_time = time.time()
+        typeII_lbol(*params)
+        second_call_time = time.time() - start_time
+
+        # Second call should be significantly faster
+        self.assertLess(second_call_time, first_call_time)
+
+        # Models should be loaded only once
+        self.assertEqual(mock_joblib_load.call_count, 2)
+        self.assertEqual(mock_keras_load.call_count, 1)
 
 class TestEnhancedSpectralModel(unittest.TestCase):
 
@@ -277,23 +635,29 @@ class TestTypeIIFunctions(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Import functions under test
-        from redback_surrogates.supernovamodels import typeII_lbol, typeII_photosphere, typeII_spectra
+        from redback_surrogates.supernovamodels import typeII_lbol, typeII_photosphere, typeII_spectra, \
+            clear_typeII_model_cache
         self.typeII_lbol = typeII_lbol
         self.typeII_photosphere = typeII_photosphere
         self.typeII_spectra = typeII_spectra
+        self.clear_typeII_model_cache = clear_typeII_model_cache
 
-    @patch('redback_surrogates.supernovamodels.load')  # Patch load in the module where it's used
-    @patch('redback_surrogates.supernovamodels.keras.saving.load_model')  # Patch keras load in the module
-    def test_typeII_lbol_single_params(self, mock_keras_load, mock_joblib_load):
+        # Clear caches before each test
+        self.clear_typeII_model_cache()
+
+    def tearDown(self):
+        """Clear caches after each test."""
+        self.clear_typeII_model_cache()
+
+    @patch('redback_surrogates.supernovamodels._load_lbol_models')
+    def test_typeII_lbol_single_params(self, mock_load_lbol_models):
         """Test typeII_lbol with single parameter values."""
-        # Setup mocks - load is called twice in typeII_lbol
+        # Setup mocks
         mock_lbol_scaler = MagicMock()
         mock_x_scaler = MagicMock()
         mock_model = MagicMock()
 
-        # First call to load() returns lbolscaler, second returns xscaler
-        mock_joblib_load.side_effect = [mock_lbol_scaler, mock_x_scaler]
-        mock_keras_load.return_value = mock_model
+        mock_load_lbol_models.return_value = (mock_lbol_scaler, mock_model, mock_x_scaler)
 
         # Setup mock returns - need to match the expected 200 time points
         mock_x_scaler.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]])
@@ -318,20 +682,20 @@ class TestTypeIIFunctions(unittest.TestCase):
         self.assertEqual(len(lbols), 200)
 
         # Verify mock calls
-        self.assertEqual(mock_joblib_load.call_count, 2)  # lbolscaler and xscaler
-        mock_keras_load.assert_called_once()
+        mock_load_lbol_models.assert_called_once()
+        mock_x_scaler.transform.assert_called_once()
+        mock_model.assert_called_once()
+        mock_lbol_scaler.inverse_transform.assert_called_once()
 
-    @patch('redback_surrogates.supernovamodels.load')
-    @patch('redback_surrogates.supernovamodels.keras.saving.load_model')
-    def test_typeII_lbol_array_params(self, mock_keras_load, mock_joblib_load):
+    @patch('redback_surrogates.supernovamodels._load_lbol_models')
+    def test_typeII_lbol_array_params(self, mock_load_lbol_models):
         """Test typeII_lbol with array parameter values."""
         # Setup mocks
         mock_lbol_scaler = MagicMock()
         mock_x_scaler = MagicMock()
         mock_model = MagicMock()
 
-        mock_joblib_load.side_effect = [mock_lbol_scaler, mock_x_scaler]
-        mock_keras_load.return_value = mock_model
+        mock_load_lbol_models.return_value = (mock_lbol_scaler, mock_model, mock_x_scaler)
 
         # Setup mock returns for multiple parameters
         mock_x_scaler.transform.return_value = np.array([
@@ -356,21 +720,18 @@ class TestTypeIIFunctions(unittest.TestCase):
         self.assertEqual(len(tts), 200)
         self.assertEqual(lbols.shape, (2, 200))
 
-    @patch('redback_surrogates.supernovamodels.load')
-    @patch('redback_surrogates.supernovamodels.keras.saving.load_model')
-    def test_typeII_photosphere_single_params(self, mock_keras_load, mock_joblib_load):
+    @patch('redback_surrogates.supernovamodels._load_photosphere_models')
+    def test_typeII_photosphere_single_params(self, mock_load_photosphere_models):
         """Test typeII_photosphere with single parameter values."""
-        # Setup mocks - 3 calls to load() in typeII_photosphere
+        # Setup mocks
         mock_x_scaler = MagicMock()
         mock_temp_scaler = MagicMock()
         mock_rad_scaler = MagicMock()
         mock_temp_model = MagicMock()
         mock_rad_model = MagicMock()
 
-        # load() is called 3 times: xscaler, tempscaler, radscaler
-        mock_joblib_load.side_effect = [mock_x_scaler, mock_temp_scaler, mock_rad_scaler]
-        # keras load is called 2 times: temp_model, rad_model
-        mock_keras_load.side_effect = [mock_temp_model, mock_rad_model]
+        mock_load_photosphere_models.return_value = (
+        mock_x_scaler, mock_temp_scaler, mock_rad_scaler, mock_temp_model, mock_rad_model)
 
         # Setup mock returns
         mock_x_scaler.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]])
@@ -396,16 +757,15 @@ class TestTypeIIFunctions(unittest.TestCase):
         self.assertEqual(len(rad), 200)
 
         # Verify mock calls
-        self.assertEqual(mock_keras_load.call_count, 2)
-        self.assertEqual(mock_joblib_load.call_count, 3)
+        mock_load_photosphere_models.assert_called_once()
 
-    @patch('redback_surrogates.supernovamodels.EnhancedSpectralModel.load_model')
+    @patch('redback_surrogates.supernovamodels._load_spectra_model')
     @patch('redback_surrogates.supernovamodels.pd.DataFrame')
-    def test_typeII_spectra(self, mock_dataframe, mock_load_model):
+    def test_typeII_spectra(self, mock_dataframe, mock_load_spectra_model):
         """Test typeII_spectra function."""
         # Setup mocks
         mock_model = MagicMock()
-        mock_load_model.return_value = mock_model
+        mock_load_spectra_model.return_value = mock_model
 
         # Mock DataFrame creation
         mock_df = MagicMock()
@@ -446,16 +806,15 @@ class TestTypeIIFunctions(unittest.TestCase):
         self.assertEqual(call_args['csm_radius'], rcsm * 1e14)  # Should be scaled
         self.assertEqual(call_args['explosion_energy'], esn)
 
-    @patch('redback_surrogates.supernovamodels.load')
-    @patch('redback_surrogates.supernovamodels.keras.saving.load_model')
-    def test_rcsm_scaling(self, mock_keras_load, mock_joblib_load):
+    @patch('redback_surrogates.supernovamodels._load_lbol_models')
+    def test_rcsm_scaling(self, mock_load_lbol_models):
         """Test that rcsm parameter is properly scaled in all functions."""
         # Setup mocks
-        mock_model = MagicMock()
         mock_lbol_scaler = MagicMock()
+        mock_model = MagicMock()
         mock_x_scaler = MagicMock()
-        mock_keras_load.return_value = mock_model
-        mock_joblib_load.side_effect = [mock_lbol_scaler, mock_x_scaler]
+
+        mock_load_lbol_models.return_value = (mock_lbol_scaler, mock_model, mock_x_scaler)
 
         mock_x_scaler.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]])
         mock_model.return_value = np.random.rand(1, 200)
@@ -468,16 +827,15 @@ class TestTypeIIFunctions(unittest.TestCase):
         call_args = mock_x_scaler.transform.call_args[0][0]
         self.assertEqual(call_args[0][4], 5e14)  # rcsm should be scaled
 
-    @patch('redback_surrogates.supernovamodels.load')
-    @patch('redback_surrogates.supernovamodels.keras.saving.load_model')
-    def test_log10_mdot_abs_value(self, mock_keras_load, mock_joblib_load):
+    @patch('redback_surrogates.supernovamodels._load_lbol_models')
+    def test_log10_mdot_abs_value(self, mock_load_lbol_models):
         """Test that log10_mdot is converted to absolute value."""
         # Setup mocks
-        mock_model = MagicMock()
         mock_lbol_scaler = MagicMock()
+        mock_model = MagicMock()
         mock_x_scaler = MagicMock()
-        mock_keras_load.return_value = mock_model
-        mock_joblib_load.side_effect = [mock_lbol_scaler, mock_x_scaler]
+
+        mock_load_lbol_models.return_value = (mock_lbol_scaler, mock_model, mock_x_scaler)
 
         mock_x_scaler.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]])
         mock_model.return_value = np.random.rand(1, 200)
@@ -491,5 +849,4 @@ class TestTypeIIFunctions(unittest.TestCase):
         self.assertEqual(call_args[0][2], 3.0)  # Should be abs(-3.0) = 3.0
 
 
-if __name__ == '__main__':
-    unittest.main()
+
