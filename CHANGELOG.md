@@ -1,5 +1,11 @@
 # All notable changes will be documented in this file
 
+## [0.2.4] 2025-06-04
+Version 0.2.4 release of `redback_surrogates`
+
+### Added
+- Implemented caching functionality for surrogate models to speed up repeated evaluations.
+
 ## [0.2.3] 2025-06-02
 Version 0.2.3 release of `redback_surrogates`
 
