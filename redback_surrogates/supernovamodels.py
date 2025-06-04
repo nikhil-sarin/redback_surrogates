@@ -6,7 +6,7 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 import astropy.units as uu
-
+from functools import lru_cache
 import os
 dirname = os.path.dirname(__file__)
 data_folder = os.path.join(dirname, "surrogate_data")
@@ -173,6 +173,39 @@ class EnhancedSpectralModel:
 
         return model
 
+# Cached model loaders
+@lru_cache(maxsize=1)
+def _load_lbol_models():
+    """Load and cache the lbol models and scalers."""
+    lbolscaler = load(data_folder + '/TypeII_Moriya/lbolscaler.save')
+    lbol_model = keras.saving.load_model(data_folder + '/TypeII_Moriya/lbol_model.keras')
+    xscaler = load(data_folder + '/TypeII_Moriya/xscaler.save')
+    return lbolscaler, lbol_model, xscaler
+
+@lru_cache(maxsize=1)
+def _load_photosphere_models():
+    """Load and cache the photosphere models and scalers."""
+    xscaler = load(data_folder + '/TypeII_Moriya/xscaler.save')
+    tempscaler = load(data_folder + '/TypeII_Moriya/temperature_scaler.save')
+    radscaler = load(data_folder + '/TypeII_Moriya/radius_scaler.save')
+    temp_model = keras.saving.load_model(data_folder + '/TypeII_Moriya/temp_model.keras')
+    rad_model = keras.saving.load_model(data_folder + '/TypeII_Moriya/radius_model.keras')
+    return xscaler, tempscaler, radscaler, temp_model, rad_model
+
+@lru_cache(maxsize=1)
+def _load_spectra_model():
+    """Load and cache the spectra model."""
+    return EnhancedSpectralModel.load_model()
+
+# Optional: Function to clear all caches if needed
+def clear_typeII_model_cache():
+    """Clear all cached models to free memory."""
+    _load_lbol_models.cache_clear()
+    _load_photosphere_models.cache_clear()
+    _load_spectra_model.cache_clear()
+
+
+# Updated functions using cached models
 @citation_wrapper("https://ui.adsabs.harvard.edu/abs/2025arXiv250602107S/abstract, https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
 def typeII_lbol(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
     """
@@ -189,9 +222,10 @@ def typeII_lbol(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
     """
     rcsm = rcsm * 1e14
     log10_mdot = np.abs(log10_mdot)
-    lbolscaler = load(data_folder + '/TypeII_Moriya/lbolscaler.save')
-    lbol_model = keras.saving.load_model(data_folder + '/TypeII_Moriya/lbol_model.keras')
-    xscaler = load(data_folder + '/TypeII_Moriya/xscaler.save')
+
+    # Load cached models
+    lbolscaler, lbol_model, xscaler = _load_lbol_models()
+
     tts = np.geomspace(1e-1, 400, 200)
     ss = np.array([progenitor, ni_mass, log10_mdot, beta, rcsm, esn]).T
     if isinstance(progenitor, float):
@@ -201,7 +235,8 @@ def typeII_lbol(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
     lbols = lbolscaler.inverse_transform(lbols)
     if isinstance(progenitor, float):
         lbols = lbols.flatten()
-    return tts, 10**lbols
+    return tts, 10 ** lbols
+
 
 @citation_wrapper("https://ui.adsabs.harvard.edu/abs/2025arXiv250602107S/abstract, https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
 def typeII_photosphere(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
@@ -220,11 +255,10 @@ def typeII_photosphere(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwarg
     """
     rcsm = rcsm * 1e14
     log10_mdot = np.abs(log10_mdot)
-    xscaler = load(data_folder + '/TypeII_Moriya/xscaler.save')
-    tempscaler = load(data_folder + '/TypeII_Moriya/temperature_scaler.save')
-    radscaler = load(data_folder + '/TypeII_Moriya/radius_scaler.save')
-    temp_model = keras.saving.load_model(data_folder + '/TypeII_Moriya/temp_model.keras')
-    rad_model = keras.saving.load_model(data_folder + '/TypeII_Moriya/radius_model.keras')
+
+    # Load cached models
+    xscaler, tempscaler, radscaler, temp_model, rad_model = _load_photosphere_models()
+
     tts = np.geomspace(1e-1, 400, 200)
     ss = np.array([progenitor, ni_mass, log10_mdot, beta, rcsm, esn]).T
     if isinstance(progenitor, float):
@@ -238,6 +272,7 @@ def typeII_photosphere(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwarg
         temp = temp.flatten()
         rad = rad.flatten()
     return tts, temp, rad
+
 
 @citation_wrapper("https://ui.adsabs.harvard.edu/abs/2025arXiv250602107S/abstract, https://ui.adsabs.harvard.edu/abs/2023PASJ...75..634M/abstract")
 def typeII_spectra(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
@@ -269,8 +304,9 @@ def typeII_spectra(progenitor, ni_mass, log10_mdot, beta, rcsm, esn, **kwargs):
         'explosion_energy': esn
     }])
 
-    # Get the predicted spectrum in rest frame
-    model = EnhancedSpectralModel.load_model()
+    # Get cached model
+    model = _load_spectra_model()
+
     predicted_spectrum = model.predict_spectrum(new_params)
     # Apply empirical correction factor (if needed)
     predicted_spectrum = 10 ** predicted_spectrum
