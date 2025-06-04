@@ -24,7 +24,7 @@ def _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency):
     return np.array(test_data)    
 
     
-@citation_wrapper("Wallace and Sarin in prep.")   
+@citation_wrapper("https://ui.adsabs.harvard.edu/abs/2025MNRAS.539.3319W/abstract")
 def tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, **kwargs):
     """
     tophat afterglow model using trained mpl regressor
