@@ -26,12 +26,12 @@ setup(name='redback_surrogates',
           "sphinx-rtd-theme",
           "sphinx-tabs",
           "kilonovanet",
+          "tensorflow",
+          "keras",
       ],
       extras_require={
           'all': [
               "bilby",
-              "tensorflow",
-              "keras",
           ]
       },
       python_requires=">=3.10",
