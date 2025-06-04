@@ -31,6 +31,7 @@ setup(name='redback_surrogates',
           'all': [
               "bilby",
               "tensorflow",
+              "keras",
           ]
       },
       python_requires=">=3.10",
