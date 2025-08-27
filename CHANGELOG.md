@@ -1,5 +1,8 @@
 # All notable changes will be documented in this file
 
+## [0.2.5] 2025-08-28
+Version 0.2.5 release of `redback_surrogates`
+
 ## [0.2.4] 2025-06-04
 Version 0.2.4 release of `redback_surrogates`
 
