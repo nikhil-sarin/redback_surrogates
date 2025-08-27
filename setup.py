@@ -18,6 +18,7 @@ setup(name='redback_surrogates',
       install_requires=[
           "setuptools",
           "numpy",
+          "tqdm",
           "pyphot==1.6.0",
           "pandas",
           "scipy",
