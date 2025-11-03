@@ -1,10 +1,9 @@
 """A class for general surrogate models learned from data."""
 
 import json
+import numpy as np
 import onnx
 import onnxruntime as rt
-import torch
-import numpy as np
 
 from pathlib import Path
 
@@ -71,29 +70,9 @@ class LearnedSurrogateModel:
         """List of wavelength points."""
         return self._metadata.get("wavelengths", None)
 
-    @property
-    def output_shape(self):
-        """Shape of the output spectra (times, wavelengths)."""
-        return self._metadata.get("output_shape", None)
-
     def __call__(self, **kwargs):
         """Compute the spectral energy distribution for given parameters."""
         return self.predict_spectra(kwargs)
-
-    def params_to_tensors(self, params):
-        """Convert a dictionary of parameters to a model input tensor.
-        Each value must be individually convertable to a tensor.
-
-        Parameters
-        ----------
-        params : dict
-            The a dictionary mapping input parameter to value.
-
-        Returns
-        -------
-
-        """
-        return [torch.tensor(params[key], dtype=torch.float32) for key in self.param_names]
 
     @staticmethod
     def _onnx_metadata_to_dict(model):
@@ -151,16 +130,6 @@ class LearnedSurrogateModel:
 
         onnx.save(self._model, filepath)
 
-    @classmethod
-    def fit_from_data(cls, parameters, spectra, training_config):
-        """Fit the surrogate model from training data.
-
-        :param parameters: DataFrame or of physical parameters
-        :param spectra: Array of spectral data
-        :param training_config: Configuration dictionary for training
-        """
-        pass
-
     def predict_spectra(self, params):
         """Compute the spectral energy distribution for given parameters.
 
@@ -169,4 +138,3 @@ class LearnedSurrogateModel:
         inputs = {key: np.array(params[key], dtype=np.float32) for key in self.param_names}
         output = self._ort_session.run([self.output_name], inputs)
         return output
-    
