@@ -3,6 +3,8 @@
 import json
 import onnx
 import onnxruntime as rt
+import torch
+import numpy as np
 
 from pathlib import Path
 
@@ -16,7 +18,6 @@ class LearnedSurrogateModel:
             *,
             times=None,
             wavelengths=None,
-            parameter_names=None,
             metadata=None,
         ):
         """Initialize the surrogate model.
@@ -24,12 +25,12 @@ class LearnedSurrogateModel:
         :param model: The underlying learned model
         :param times: List of time points
         :param wavelengths: List of wavelength points
-        :param parameter_names: List of parameter names
         :param metadata: Additional metadata dictionary.
         """
         self._model = model
         if model is None:
             raise ValueError("Model must be provided.")
+        self.param_names = [p.name for p in model.graph.input]
 
         # We store all the metadata in a single dictionary so that we can keep it in one
         # place as we convert back and forth to ONNX files.
@@ -44,20 +45,21 @@ class LearnedSurrogateModel:
         elif "wavelengths" not in self._metadata:
             raise ValueError("Wavelengths must be provided either in metadata or as argument.")
 
-        if parameter_names is not None:
-            self._metadata["parameter_names"] = list(parameter_names)
-        elif "parameter_names" not in self._metadata:
-            raise ValueError("Parameter names must be provided either in metadata or as argument.")
-
-        # Determine the output shape if we do not already have it.
-        if "output_shape" not in self._metadata:
-            self._metadata["output_shape"] = (len(self.times), len(self.wavelengths))
-
         # Create the ONNX runtime session for inference.
         self._ort_session = rt.InferenceSession(
             self._model.SerializeToString(),
             providers=rt.get_available_providers(),
         )
+
+        # Determine the information about the output. We only support one output value
+        # the grid itself.
+        output0 = self._ort_session.get_outputs()[0]
+        self.output_name = output0.name
+        if (output0.shape[1] != len(self.times) or output0.shape[2] != len(self.wavelengths)):
+            raise ValueError(
+                f"Shape of output {output0.shape} does not match the times ({len(self.times)}) "
+                f" and wavelengths ({len(self.wavelengths)})."
+            )
 
     @property
     def times(self):
@@ -70,30 +72,28 @@ class LearnedSurrogateModel:
         return self._metadata.get("wavelengths", None)
 
     @property
-    def parameter_names(self):
-        """List of parameter names."""
-        return self._metadata.get("parameter_names", None)
-
-    @property
     def output_shape(self):
         """Shape of the output spectra (times, wavelengths)."""
         return self._metadata.get("output_shape", None)
 
-    def __call__(self, parameters):
-        """Compute the spectral energy distribution for given parameters.
+    def __call__(self, **kwargs):
+        """Compute the spectral energy distribution for given parameters."""
+        return self.predict_spectra(kwargs)
 
-        :param parameters: DataFrame or of physical parameters
+    def params_to_tensors(self, params):
+        """Convert a dictionary of parameters to a model input tensor.
+        Each value must be individually convertable to a tensor.
+
+        Parameters
+        ----------
+        params : dict
+            The a dictionary mapping input parameter to value.
+
+        Returns
+        -------
+
         """
-        self.predict_spectra(parameters)
-
-    def tensor_from_params(self, **parameters):
-        """Convert parameters to input tensor for the model.
-
-        :param parameters: DataFrame or of physical parameters
-
-        :return: Input tensor for the model
-        """
-        torch.tensor
+        return [torch.tensor(params[key], dtype=torch.float32) for key in self.param_names]
 
     @staticmethod
     def _onnx_metadata_to_dict(model):
@@ -161,10 +161,12 @@ class LearnedSurrogateModel:
         """
         pass
 
-    def predict_spectra(self, parameters):
+    def predict_spectra(self, params):
         """Compute the spectral energy distribution for given parameters.
 
-        :param parameters: DataFrame or of physical parameters
+        :param params: dict mapping parameter name to its value
         """
-
-        pass
+        inputs = {key: np.array(params[key], dtype=np.float32) for key in self.param_names}
+        output = self._ort_session.run([self.output_name], inputs)
+        return output
+    

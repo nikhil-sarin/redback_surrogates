@@ -1,3 +1,4 @@
+import numpy as np
 import unittest
 
 from pathlib import Path
@@ -14,4 +15,12 @@ class TestLearnedSurrogateModel(unittest.TestCase):
         pass
 
     def test_learned_surrogate_from_onnx_file(self):
+        """Test that we can load a surrogate model from a file."""
         model = LearnedSurrogateModel.from_onnx_file(self.data_dir / "test_model.onnx")
+        assert model.times is not None
+        assert model.wavelengths is not None
+        assert np.array_equal(model.param_names, ["frequency", "amplitude", "center", "width"])
+        
+        output = model(frequency=1.0, amplitude=10.0, center=1500.0, width=100.0)[0]
+        assert output.shape == (1, len(model.times), len(model.wavelengths))
+
