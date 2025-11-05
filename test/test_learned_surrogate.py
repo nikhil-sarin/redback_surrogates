@@ -5,7 +5,10 @@ import unittest
 
 from pathlib import Path
 
-from redback_surrogates.learned_surrogate import assert_safe_param_names, LearnedSurrogateModel
+from redback_surrogates.learned_surrogate import (
+    assert_safe_param_names,
+    LearnedSurrogateModel,
+)
 
 
 class TestLearnedSurrogateModel(unittest.TestCase):
@@ -38,13 +41,13 @@ class TestLearnedSurrogateModel(unittest.TestCase):
         )
 
         # Test that we correctly created a dynamic predict method.
-        assert hasattr(model, "predict")
-        assert isinstance(model.predict, types.MethodType)
-        signature = inspect.getfullargspec(model.predict)
+        assert hasattr(model, "predict_grid")
+        assert isinstance(model.predict_grid, types.MethodType)
+        signature = inspect.getfullargspec(model.predict_grid)
         assert signature.args == ["self", "frequency", "amplitude", "center", "width"]
 
         # Test that we can use the dynamically created predict method to get outputs.
-        output = model.predict(
+        output = model.predict_grid(
             frequency=1.0, amplitude=10.0, center=1500.0, width=100.0
         )[0]
         assert output.shape == (1, len(model.times), len(model.wavelengths))

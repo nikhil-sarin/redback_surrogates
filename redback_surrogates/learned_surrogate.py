@@ -4,9 +4,12 @@ import json
 import numpy as np
 import onnx
 import onnxruntime as rt
+import random
 import re
+import string
 import types
 
+from astropy.cosmology import Planck18 as cosmo  # noqa
 from pathlib import Path
 
 
@@ -89,18 +92,18 @@ class LearnedSurrogateModel:
                 f" and wavelengths ({len(self.wavelengths)})."
             )
 
-        # Create a dynamic method that takes parameters matching param_names
-        self._create_dynamic_method()
+        # Create dynamic methods that takes parameters matching param_names
+        self.predict_grid = self._create_dynamic_grid_method()
 
-    def _create_dynamic_method(self):
-        """Create a dynamic method with parameters matching param_names."""
+    def _create_dynamic_grid_method(self):
+        """Create a dynamic method to generate the full grid with parameters matching param_names."""
         # Check that the parameter names are safe to use in an exec statement.
         # We do this by restricting to valid Python identifiers.
         assert_safe_param_names(self.param_names)
 
         # Use the parameter list to create the function signature and
         # internal dictionary.
-        param_str = ", ".join(["self"] + self.param_names)
+        param_str = ", ".join(self.param_names)
         param_dict_str = (
             "{" + ", ".join([f"'{name}': {name}" for name in self.param_names]) + "}"
         )
@@ -113,10 +116,10 @@ class LearnedSurrogateModel:
         # Build the complete function string. We have already checked that
         # the parameter names are safe.
         function_code = (
-            f"def _dynamic_predict({param_str}):\n"
+            f"def _dynamic_predict_grid(self, {param_str}):\n"
             f"    '''{doc_str}    '''\n"
             f"    param_dict = {param_dict_str}\n"
-            f"    return self.predict_spectra(param_dict)\n"
+            f"    return self.predict_spectra_grid(**param_dict)\n"
         )
 
         # Execute the function definition and bind it to this instance.
@@ -126,7 +129,7 @@ class LearnedSurrogateModel:
         exec(function_code, globals(), local_namespace)
 
         # Bind the function as a method to this instance
-        self.predict = types.MethodType(local_namespace["_dynamic_predict"], self)
+        return types.MethodType(local_namespace["_dynamic_predict_grid"], self)
 
     @property
     def times(self):
@@ -194,7 +197,7 @@ class LearnedSurrogateModel:
 
         onnx.save(self._model, filepath)
 
-    def predict_spectra(self, params):
+    def predict_spectra_grid(self, **params):
         """Compute the spectral energy distribution for given parameters.
 
         :param params: dict mapping parameter name to its value
