@@ -4,21 +4,27 @@ import json
 import numpy as np
 import onnx
 import onnxruntime as rt
+import re
+import types
 
 from pathlib import Path
 
 
 class LearnedSurrogateModel:
-    """A general surrogate model class."""
+    """A general surrogate model class.
+
+    The class will have a dynamic method `predict` created at initialization time
+    that acts like a redback model with parameters matching the model inputs.
+    """
 
     def __init__(
-            self,
-            model,
-            *,
-            times=None,
-            wavelengths=None,
-            metadata=None,
-        ):
+        self,
+        model,
+        *,
+        times=None,
+        wavelengths=None,
+        metadata=None,
+    ):
         """Initialize the surrogate model.
 
         :param model: The underlying learned model
@@ -29,6 +35,8 @@ class LearnedSurrogateModel:
         self._model = model
         if model is None:
             raise ValueError("Model must be provided.")
+
+        # Load the parameter names from the model inputs.
         self.param_names = [p.name for p in model.graph.input]
 
         # We store all the metadata in a single dictionary so that we can keep it in one
@@ -37,12 +45,16 @@ class LearnedSurrogateModel:
         if times is not None:
             self._metadata["times"] = list(times)
         elif "times" not in self._metadata:
-            raise ValueError("Times must be provided either in metadata or as argument.")
+            raise ValueError(
+                "Times must be provided either in metadata or as argument."
+            )
 
         if wavelengths is not None:
             self._metadata["wavelengths"] = list(wavelengths)
         elif "wavelengths" not in self._metadata:
-            raise ValueError("Wavelengths must be provided either in metadata or as argument.")
+            raise ValueError(
+                "Wavelengths must be provided either in metadata or as argument."
+            )
 
         # Create the ONNX runtime session for inference.
         self._ort_session = rt.InferenceSession(
@@ -54,11 +66,58 @@ class LearnedSurrogateModel:
         # the grid itself.
         output0 = self._ort_session.get_outputs()[0]
         self.output_name = output0.name
-        if (output0.shape[1] != len(self.times) or output0.shape[2] != len(self.wavelengths)):
+        if output0.shape[1] != len(self.times) or output0.shape[2] != len(
+            self.wavelengths
+        ):
             raise ValueError(
                 f"Shape of output {output0.shape} does not match the times ({len(self.times)}) "
                 f" and wavelengths ({len(self.wavelengths)})."
             )
+
+        # Create a dynamic method that takes parameters matching param_names
+        self._create_dynamic_method()
+
+    def _create_dynamic_method(self):
+        """Create a dynamic method with parameters matching param_names."""
+        # Check that the parameter names are safe to use in an exec statement.
+        # We do this by restricting to valid Python identifiers.
+        identifier_re = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+        for name in self.param_names:
+            if not identifier_re.match(name):
+                raise ValueError(
+                    f"Parameter name '{name}' is invalid. Parameter names can "
+                    "only contain alphanumeric characters and underscores."
+                )
+
+        # Use the parameter list to create the function signature and
+        # internal dictionary.
+        param_str = ", ".join(["self"] + self.param_names)
+        param_dict_str = (
+            "{" + ", ".join([f"'{name}': {name}" for name in self.param_names]) + "}"
+        )
+        doc_str = (
+            "Dynamically generated method to predict spectra.\n\n"
+            + "\n".join([f":param {name}: float" for name in self.param_names])
+            + "\n:return: Predicted spectra array of shape (1, len(times), len(wavelengths))\n"
+        )
+
+        # Build the complete function string. We have already checked that
+        # the parameter names are safe.
+        function_code = (
+            f"def _dynamic_predict({param_str}):\n"
+            f"    '''{doc_str}    '''\n"
+            f"    param_dict = {param_dict_str}\n"
+            f"    return self.predict_spectra(param_dict)\n"
+        )
+
+        # Execute the function definition and bind it to this instance.
+        # Note that we can only do exec safely here because we checked
+        # the parameter names earlier to ensure they are safe.
+        local_namespace = {"self": self}
+        exec(function_code, globals(), local_namespace)
+
+        # Bind the function as a method to this instance
+        self.predict = types.MethodType(local_namespace["_dynamic_predict"], self)
 
     @property
     def times(self):
@@ -69,10 +128,6 @@ class LearnedSurrogateModel:
     def wavelengths(self):
         """List of wavelength points."""
         return self._metadata.get("wavelengths", None)
-
-    def __call__(self, **kwargs):
-        """Compute the spectral energy distribution for given parameters."""
-        return self.predict_spectra(kwargs)
 
     @staticmethod
     def _onnx_metadata_to_dict(model):
@@ -135,6 +190,8 @@ class LearnedSurrogateModel:
 
         :param params: dict mapping parameter name to its value
         """
-        inputs = {key: np.array(params[key], dtype=np.float32) for key in self.param_names}
+        inputs = {
+            key: np.array(params[key], dtype=np.float32) for key in self.param_names
+        }
         output = self._ort_session.run([self.output_name], inputs)
         return output
