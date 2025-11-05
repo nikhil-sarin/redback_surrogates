@@ -5,7 +5,7 @@ import unittest
 
 from pathlib import Path
 
-from redback_surrogates.learned_surrogate import LearnedSurrogateModel
+from redback_surrogates.learned_surrogate import assert_safe_param_names, LearnedSurrogateModel
 
 
 class TestLearnedSurrogateModel(unittest.TestCase):
@@ -15,6 +15,18 @@ class TestLearnedSurrogateModel(unittest.TestCase):
 
     def tearDown(self) -> None:
         pass
+
+    def test_assert_safe_param_names(self):
+        """Test that assert_safe_param_names works as expected."""
+        # Valid names should not raise an error.
+        valid_names = ["param1", "param_2", "Param3", "_param4"]
+        assert_safe_param_names(valid_names)
+        
+        # Invalid names should raise an error.
+        invalid_names = ["1param", "param-2", "param 3", "param$4", "param;x", "param)x", "a b", "a.b"]
+        for name in invalid_names:
+            with self.assertRaises(ValueError):
+                assert_safe_param_names([name])
 
     def test_learned_surrogate_from_onnx_file(self):
         """Test that we can load a surrogate model from a file."""

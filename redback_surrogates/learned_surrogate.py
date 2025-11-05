@@ -10,6 +10,20 @@ import types
 from pathlib import Path
 
 
+def assert_safe_param_names(param_names):
+    """Check that a list of parameter names are safe to use in dynamic method creation.
+
+    :param param_names: The original parameter names
+    """
+    identifier_re = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+    for name in param_names:
+        if not identifier_re.match(name):
+            raise ValueError(
+                f"Parameter name '{name}' is invalid. Parameter names can "
+                "only contain alphanumeric characters and underscores."
+            )
+
+
 class LearnedSurrogateModel:
     """A general surrogate model class.
 
@@ -38,6 +52,7 @@ class LearnedSurrogateModel:
 
         # Load the parameter names from the model inputs.
         self.param_names = [p.name for p in model.graph.input]
+        assert_safe_param_names(self.param_names)
 
         # We store all the metadata in a single dictionary so that we can keep it in one
         # place as we convert back and forth to ONNX files.
@@ -81,13 +96,7 @@ class LearnedSurrogateModel:
         """Create a dynamic method with parameters matching param_names."""
         # Check that the parameter names are safe to use in an exec statement.
         # We do this by restricting to valid Python identifiers.
-        identifier_re = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-        for name in self.param_names:
-            if not identifier_re.match(name):
-                raise ValueError(
-                    f"Parameter name '{name}' is invalid. Parameter names can "
-                    "only contain alphanumeric characters and underscores."
-                )
+        assert_safe_param_names(self.param_names)
 
         # Use the parameter list to create the function signature and
         # internal dictionary.
