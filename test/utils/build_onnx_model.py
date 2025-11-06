@@ -16,6 +16,9 @@ from tqdm import tqdm
 from redback_surrogates.learned_surrogate import LearnedSurrogateModel
 
 
+torch.set_default_dtype(torch.float64)
+
+
 # Define a simple sigmoid neural network
 class SigmoidModel(nn.Module):
     """This is the simple neural network architecture used in the test ONNX model."""
@@ -94,11 +97,11 @@ def _build_testing_data():
     ]
 
     # Convert everything to torch tensors
-    frequency = torch.tensor(frequency, dtype=torch.float32)
-    amplitude = torch.tensor(amplitude, dtype=torch.float32)
-    center = torch.tensor(center, dtype=torch.float32)
-    width = torch.tensor(width, dtype=torch.float32)
-    y_tensor = torch.tensor(y_vals, dtype=torch.float32)
+    frequency = torch.tensor(frequency)
+    amplitude = torch.tensor(amplitude)
+    center = torch.tensor(center)
+    width = torch.tensor(width)
+    y_tensor = torch.tensor(y_vals)
 
     # Configure the model and training.
     model = SigmoidModel(

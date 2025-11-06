@@ -156,7 +156,7 @@ class LearnedSurrogateModel:
         :param params: dict mapping parameter name to its value
         """
         inputs = {
-            key: np.array(params[key], dtype=np.float32) for key in self.param_names
+            key: np.array(params[key]) for key in self.param_names
         }
         output = self._ort_session.run([self.output_name], inputs)
         return output
