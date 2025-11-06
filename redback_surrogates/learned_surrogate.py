@@ -4,12 +4,8 @@ import json
 import numpy as np
 import onnx
 import onnxruntime as rt
-import random
 import re
-import string
-import types
 
-from astropy.cosmology import Planck18 as cosmo  # noqa
 from pathlib import Path
 
 
@@ -28,11 +24,7 @@ def assert_safe_param_names(param_names):
 
 
 class LearnedSurrogateModel:
-    """A general surrogate model class.
-
-    The class will have a dynamic method `predict` created at initialization time
-    that acts like a redback model with parameters matching the model inputs.
-    """
+    """A general surrogate model class."""
 
     def __init__(
         self,
@@ -91,45 +83,6 @@ class LearnedSurrogateModel:
                 f"Shape of output {output0.shape} does not match the times ({len(self.times)}) "
                 f" and wavelengths ({len(self.wavelengths)})."
             )
-
-        # Create dynamic methods that takes parameters matching param_names
-        self.predict_grid = self._create_dynamic_grid_method()
-
-    def _create_dynamic_grid_method(self):
-        """Create a dynamic method to generate the full grid with parameters matching param_names."""
-        # Check that the parameter names are safe to use in an exec statement.
-        # We do this by restricting to valid Python identifiers.
-        assert_safe_param_names(self.param_names)
-
-        # Use the parameter list to create the function signature and
-        # internal dictionary.
-        param_str = ", ".join(self.param_names)
-        param_dict_str = (
-            "{" + ", ".join([f"'{name}': {name}" for name in self.param_names]) + "}"
-        )
-        doc_str = (
-            "Dynamically generated method to predict spectra.\n\n"
-            + "\n".join([f":param {name}: float" for name in self.param_names])
-            + "\n:return: Predicted spectra array of shape (1, len(times), len(wavelengths))\n"
-        )
-
-        # Build the complete function string. We have already checked that
-        # the parameter names are safe.
-        function_code = (
-            f"def _dynamic_predict_grid(self, {param_str}):\n"
-            f"    '''{doc_str}    '''\n"
-            f"    param_dict = {param_dict_str}\n"
-            f"    return self.predict_spectra_grid(**param_dict)\n"
-        )
-
-        # Execute the function definition and bind it to this instance.
-        # Note that we can only do exec safely here because we checked
-        # the parameter names earlier to ensure they are safe.
-        local_namespace = {"self": self}
-        exec(function_code, globals(), local_namespace)
-
-        # Bind the function as a method to this instance
-        return types.MethodType(local_namespace["_dynamic_predict_grid"], self)
 
     @property
     def times(self):

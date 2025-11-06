@@ -1,6 +1,4 @@
-import inspect
 import numpy as np
-import types
 import unittest
 
 from pathlib import Path
@@ -24,9 +22,18 @@ class TestLearnedSurrogateModel(unittest.TestCase):
         # Valid names should not raise an error.
         valid_names = ["param1", "param_2", "Param3", "_param4"]
         assert_safe_param_names(valid_names)
-        
+
         # Invalid names should raise an error.
-        invalid_names = ["1param", "param-2", "param 3", "param$4", "param;x", "param)x", "a b", "a.b"]
+        invalid_names = [
+            "1param",
+            "param-2",
+            "param 3",
+            "param$4",
+            "param;x",
+            "param)x",
+            "a b",
+            "a.b",
+        ]
         for name in invalid_names:
             with self.assertRaises(ValueError):
                 assert_safe_param_names([name])
@@ -40,14 +47,8 @@ class TestLearnedSurrogateModel(unittest.TestCase):
             model.param_names, ["frequency", "amplitude", "center", "width"]
         )
 
-        # Test that we correctly created a dynamic predict method.
-        assert hasattr(model, "predict_grid")
-        assert isinstance(model.predict_grid, types.MethodType)
-        signature = inspect.getfullargspec(model.predict_grid)
-        assert signature.args == ["self", "frequency", "amplitude", "center", "width"]
-
         # Test that we can use the dynamically created predict method to get outputs.
-        output = model.predict_grid(
+        output = model.predict_spectra_grid(
             frequency=1.0, amplitude=10.0, center=1500.0, width=100.0
         )[0]
         assert output.shape == (1, len(model.times), len(model.wavelengths))
