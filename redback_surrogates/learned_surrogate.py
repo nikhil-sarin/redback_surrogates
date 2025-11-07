@@ -89,6 +89,21 @@ class LearnedSurrogateModel:
                 f" and wavelengths ({len(self.wavelengths)})."
             )
 
+    def __repr__(self):
+        """Create a human-readable description of the model and its parameters as pulled from the metadata."""
+        description = (
+            f"LearnedSurrogateModel with {len(self.param_names)} parameters:\n"
+            f"    Times Dimension: {len(self.times)} steps [{self.times[0]}, {self.times[-1]}]\n"
+            f"    Wavelengths Dimension: {len(self.wavelengths)} steps "
+            f"[{self.wavelengths[0]}, {self.wavelengths[-1]}]\n\n"
+            f"Parameters:\n"
+        )
+
+        param_info = self._metadata.get("parameter_info", {})
+        for name in self.param_names:
+            description += f" - {name}: {param_info.get(name, 'No description available')}\n"
+        return description
+
     @property
     def times(self):
         """List of time points."""
@@ -98,6 +113,18 @@ class LearnedSurrogateModel:
     def wavelengths(self):
         """List of wavelength points."""
         return self._metadata.get("wavelengths", None)
+
+    def add_parameter_info(self, param_name, info):
+        """Add information about a parameter to the metadata.
+
+        :param param_name: The name of the parameter
+        :param info: The information string about the parameter
+        """
+        if param_name not in self.param_names:
+            raise ValueError(f"Parameter name '{param_name}' is not in the model parameters.")
+        if "parameter_info" not in self._metadata:
+            self._metadata["parameter_info"] = {}
+        self._metadata["parameter_info"][param_name] = info
 
     @staticmethod
     def _onnx_metadata_to_dict(model):

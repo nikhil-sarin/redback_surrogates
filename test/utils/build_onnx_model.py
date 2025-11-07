@@ -32,8 +32,8 @@ class SigmoidModel(nn.Module):
         self.fc3 = nn.Linear(hidden_size, output_shape[0] * output_shape[1])
         self.output_shape = output_shape
 
-    def forward(self, frequency, amplitude, center, width):
-        x = torch.stack([frequency, amplitude, center, width]).T
+    def forward(self, freq, amp, center, width):
+        x = torch.stack([freq, amp, center, width]).T
         x = self.sigmoid1(self.fc1(x))
         x = self.sigmoid2(self.fc2(x))
         x = self.fc3(x)  # No activation on final layer for regression
@@ -45,8 +45,8 @@ def _test_function(
     time,
     wave,
     *,
-    frequency=1.0,
-    amplitude=1.0,
+    freq=1.0,
+    amp=1.0,
     center=None,
     width=None,
 ):
@@ -56,9 +56,9 @@ def _test_function(
     Parameters:
     - time: array-like, Length T array of time values
     - wave: array-like, Length W array of wave values
-    - frequency: float or array-like, frequency of the sine wave
-    - amplitude: float or array-like, amplitude of the sine wave
-    - center: float or array-like, center frequency of the Gaussian envelope
+    - freq: float or array-like, freq of the sine wave
+    - amp: float or array-like, amp of the sine wave
+    - center: float or array-like, center freq of the Gaussian envelope
     - width: float or array-like, width of the Gaussian envelope
 
     Returns:
@@ -69,7 +69,7 @@ def _test_function(
     else:
         gaussian_envelope = np.ones_like(wave)
 
-    sine_wave = amplitude * np.sin(2 * np.pi * frequency * time)
+    sine_wave = amp * np.sin(2 * np.pi * freq * time)
     result = gaussian_envelope[None, :] * sine_wave[:, None]
     return result
 
@@ -80,16 +80,16 @@ def _build_testing_data():
 
     # Create fake training data.
     num_samples = 1000
-    frequency = np.random.uniform(low=0.5, high=2.0, size=num_samples)
-    amplitude = np.random.uniform(low=10.0, high=20.0, size=num_samples)
+    freq = np.random.uniform(low=0.5, high=2.0, size=num_samples)
+    amp = np.random.uniform(low=10.0, high=20.0, size=num_samples)
     center = np.random.uniform(low=1000.0, high=2000.0, size=num_samples)
     width = np.random.uniform(low=100.0, high=500.0, size=num_samples)
     y_vals = [
         _test_function(
             times,
             waves,
-            frequency=frequency[idx],
-            amplitude=amplitude[idx],
+            freq=freq[idx],
+            amp=amp[idx],
             center=center[idx],
             width=width[idx],
         )
@@ -97,15 +97,15 @@ def _build_testing_data():
     ]
 
     # Convert everything to torch tensors
-    frequency = torch.tensor(frequency)
-    amplitude = torch.tensor(amplitude)
+    freq = torch.tensor(freq)
+    amp = torch.tensor(amp)
     center = torch.tensor(center)
     width = torch.tensor(width)
     y_tensor = torch.tensor(y_vals)
 
     # Configure the model and training.
     model = SigmoidModel(
-        4,  # Input parameters: frequency, amplitude, center, width
+        4,  # Input parameters: freq, amp, center, width
         64,  # Hidden layer size
         (
             len(times),
@@ -121,7 +121,7 @@ def _build_testing_data():
     print("Starting training...")
     for _ in tqdm(range(num_epochs)):
         # Forward pass
-        outputs = model(frequency, amplitude, center, width)
+        outputs = model(freq, amp, center, width)
         loss = criterion(outputs, y_tensor)
 
         # Backward pass and optimization
@@ -130,8 +130,8 @@ def _build_testing_data():
         optimizer.step()
 
     input_example = (
-        frequency[0],
-        amplitude[0],
+        freq[0],
+        amp[0],
         center[0],
         width[0],
     )
@@ -142,6 +142,10 @@ def _build_testing_data():
         times=times,
         wavelengths=waves,
     )
+    surrogate_model.add_parameter_info("freq", "The freq of the sine wave in Hz.")
+    surrogate_model.add_parameter_info("amp", "The amp of the sine wave.")
+    surrogate_model.add_parameter_info("center", "The center freq of the Gaussian envelope in Angstroms.")
+    surrogate_model.add_parameter_info("width", "The width of the Gaussian envelope in Angstroms.")
     surrogate_model.to_onnx_file("../data/test_model.onnx", overwrite=True)
 
 

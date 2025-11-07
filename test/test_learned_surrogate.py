@@ -44,11 +44,29 @@ class TestLearnedSurrogateModel(unittest.TestCase):
         assert model.times is not None
         assert model.wavelengths is not None
         assert np.array_equal(
-            model.param_names, ["frequency", "amplitude", "center", "width"]
+            model.param_names, ["freq", "amp", "center", "width"]
         )
 
         # Test that we can use the dynamically created predict method to get outputs.
         output = model.predict_spectra_grid(
-            frequency=1.0, amplitude=10.0, center=1500.0, width=100.0
+            freq=1.0, amp=10.0, center=1500.0, width=100.0
         )[0]
         assert output.shape == (1, len(model.times), len(model.wavelengths))
+
+        # Test that we can read the __repr__ output.
+        repr_str = repr(model)
+        print(repr_str)
+        assert "LearnedSurrogateModel with 4 parameters" in repr_str
+        assert "Times Dimension: 5 steps [0.1, 0.5]" in repr_str
+        assert "Wavelengths Dimension: 3 steps [1000.0, 2000.0]" in repr_str
+        assert "freq: The freq of the sine wave in Hz" in repr_str
+        assert "amp: The amp of the sine wave." in repr_str
+        assert "center: The center freq of the Gaussian envelope in Angstroms." in repr_str
+        assert "width: The width of the Gaussian envelope in Angstroms." in repr_str
+
+        # Test that we can overwrite and retrieve parameter info.
+        model.add_parameter_info("freq", "This is a freq param.")
+        repr_str = repr(model)
+        assert "freq: This is a freq param." in repr_str
+
+        self.assertRaises(ValueError, model.add_parameter_info, "nonexistent_param", "Info")
