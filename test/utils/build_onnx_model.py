@@ -8,8 +8,10 @@ in order to run this script.
 """
 
 import numpy as np
-
 import torch
+
+from sklearn.ensemble import GradientBoostingRegressor
+from skl2onnx import to_onnx
 from torch import nn
 from tqdm import tqdm
 
@@ -95,7 +97,10 @@ def _build_testing_data():
         )
         for idx in range(num_samples)
     ]
+    return waves, times, frequency, amplitude, center, width, y_vals
 
+
+def _train_pytorch_model(waves, times, frequency, amplitude, center, width, y_vals):
     # Convert everything to torch tensors
     frequency = torch.tensor(frequency)
     amplitude = torch.tensor(amplitude)
@@ -142,8 +147,45 @@ def _build_testing_data():
         times=times,
         wavelengths=waves,
     )
-    surrogate_model.to_onnx_file("../data/test_model.onnx", overwrite=True)
+    surrogate_model.to_onnx_file("../data/test_pytorch_model.onnx", overwrite=True)
 
+
+def _train_scikit_model(waves, times, frequency, amplitude, center, width, y_vals):
+    x = np.column_stack([frequency, amplitude, center, width])
+    y_vals = np.array([y.flatten() for y in y_vals])
+    model = GradientBoostingRegressor()
+    model.fit(x, y_vals)
+    onnx_model = to_onnx(model, x[:1])
+
+    surrogate_model = LearnedSurrogateModel(
+        onnx_model.model_proto,
+        times=times,
+        wavelengths=waves,
+        param_names=["frequency", "amplitude", "center", "width"],
+    )
+    surrogate_model.to_onnx_file("../data/test_scikit_model.onnx", overwrite=True)
+
+
+def _train_and_save_models():
+    waves, times, frequency, amplitude, center, width, y_vals = _build_testing_data()
+    _train_pytorch_model(
+        waves,
+        times,
+        frequency,
+        amplitude,
+        center,
+        width,
+        y_vals,
+    )
+    _train_scikit_model(
+        waves,
+        times,
+        frequency,
+        amplitude,
+        center,
+        width,
+        y_vals,
+    )
 
 if __name__ == "__main__":
-    _build_testing_data()
+    _train_and_save_models()

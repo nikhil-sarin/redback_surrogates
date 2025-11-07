@@ -12,10 +12,14 @@ from pathlib import Path
 def assert_safe_param_names(param_names):
     """Check that a list of parameter names are safe to use in dynamic method creation.
 
-    :param param_names: The original parameter names
+    :param param_names: The original parameter names as a list of strings.
     """
     identifier_re = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
     for name in param_names:
+        if not isinstance(name, str):
+            raise ValueError(
+                f"Parameter name '{name}' is not a string. Parameter names must be strings."
+            )
         if not identifier_re.match(name):
             raise ValueError(
                 f"Parameter name '{name}' is invalid. Parameter names can "
@@ -32,6 +36,7 @@ class LearnedSurrogateModel:
         *,
         times=None,
         wavelengths=None,
+        param_names=None,
         metadata=None,
     ):
         """Initialize the surrogate model.
@@ -39,15 +44,12 @@ class LearnedSurrogateModel:
         :param model: The underlying learned model
         :param times: List of time points
         :param wavelengths: List of wavelength points
+        :param param_names: List of parameter names (optional)
         :param metadata: Additional metadata dictionary.
         """
         self._model = model
         if model is None:
             raise ValueError("Model must be provided.")
-
-        # Load the parameter names from the model inputs.
-        self.param_names = [p.name for p in model.graph.input]
-        assert_safe_param_names(self.param_names)
 
         # We store all the metadata in a single dictionary so that we can keep it in one
         # place as we convert back and forth to ONNX files.
@@ -65,6 +67,21 @@ class LearnedSurrogateModel:
             raise ValueError(
                 "Wavelengths must be provided either in metadata or as argument."
             )
+
+        # If given the parameter names, use those. Otherwise try to pull them from
+        # the metadata or model itself.
+        if param_names is not None:
+            self.param_names = list(param_names)
+        elif "param_names" in self._metadata:
+            self.param_names = self._metadata["param_names"]
+        else:
+            self.param_names = [p.name for p in model.graph.input]
+        assert_safe_param_names(self.param_names)
+        self._metadata["param_names"] = self.param_names
+
+        # Determine if we need to collapse the parameters into a single input array
+        # such as used for sklearn models.
+        self._collapse_parameters = len(self.param_names) > 1 and (len(model.graph.input) == 1)
 
         # Create the ONNX runtime session for inference.
         self._ort_session = rt.InferenceSession(
@@ -155,8 +172,16 @@ class LearnedSurrogateModel:
 
         :param params: dict mapping parameter name to its value
         """
-        inputs = {
-            key: np.array(params[key]) for key in self.param_names
-        }
+        if self._collapse_parameters:
+            # Collapse all parameters into a single input array
+            input_array = np.column_stack([np.array(params[name]) for name in self.param_names])
+            inputs = {self._ort_session.get_inputs()[0].name: input_array}
+        else:
+            inputs = {key: np.array(params[key]) for key in self.param_names}
+
+        # Unflatten the output if needed.
         output = self._ort_session.run([self.output_name], inputs)
+        if output.shape != (1, len(self.times), len(self.wavelengths)):
+            output = output.reshape(1, len(self.times), len(self.wavelengths))
+
         return output
