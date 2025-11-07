@@ -10,7 +10,8 @@ in order to run this script.
 import numpy as np
 import torch
 
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.multioutput import MultiOutputRegressor
 from skl2onnx import to_onnx
 from torch import nn
 from tqdm import tqdm
@@ -153,17 +154,40 @@ def _train_pytorch_model(waves, times, frequency, amplitude, center, width, y_va
 def _train_scikit_model(waves, times, frequency, amplitude, center, width, y_vals):
     x = np.column_stack([frequency, amplitude, center, width])
     y_vals = np.array([y.flatten() for y in y_vals])
-    model = GradientBoostingRegressor()
+    model = MultiOutputRegressor(LinearRegression())
     model.fit(x, y_vals)
     onnx_model = to_onnx(model, x[:1])
 
     surrogate_model = LearnedSurrogateModel(
-        onnx_model.model_proto,
+        onnx_model,
         times=times,
         wavelengths=waves,
         param_names=["frequency", "amplitude", "center", "width"],
     )
     surrogate_model.to_onnx_file("../data/test_scikit_model.onnx", overwrite=True)
+
+
+def _train_flat_scikit_model():
+    x1, x2 = np.meshgrid(
+        np.linspace(0.5, 2.0, 10),  # frequency
+        np.linspace(10.0, 20.0, 10),  # amplitude
+        indexing="ij",
+    )
+    x = np.column_stack([x1.ravel(), x2.ravel()])
+    num_points = x.shape[0]
+
+    y_vals = np.tile([1, 5, 2, 10, 3, 15], num_points).reshape(num_points, 6)
+    model = MultiOutputRegressor(LinearRegression())
+    model.fit(x, y_vals)
+    onnx_model = to_onnx(model, x[:1])
+
+    surrogate_model = LearnedSurrogateModel(
+        onnx_model,
+        times=np.array([0.1, 0.2, 0.3]),
+        wavelengths=np.array([1000.0, 2000.0]),
+        param_names=["frequency", "amplitude"],
+    )
+    surrogate_model.to_onnx_file("../data/test_flat_scikit_model.onnx", overwrite=True)
 
 
 def _train_and_save_models():
@@ -186,6 +210,7 @@ def _train_and_save_models():
         width,
         y_vals,
     )
+    _train_flat_scikit_model()
 
 if __name__ == "__main__":
     _train_and_save_models()

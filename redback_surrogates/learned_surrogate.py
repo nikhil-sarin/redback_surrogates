@@ -90,11 +90,17 @@ class LearnedSurrogateModel:
         )
 
         # Determine the information about the output. We only support one output value
-        # the grid itself.
+        # the grid itself. Check that we can reshape the output to match the expected grid.
+        num_wave = len(self.wavelengths)
+        num_time = len(self.times)
+        self.output_shape = (num_time, num_wave)
+
         output0 = self._ort_session.get_outputs()[0]
         self.output_name = output0.name
-        if output0.shape[1] != len(self.times) or output0.shape[2] != len(
-            self.wavelengths
+        if (
+            not (len(output0.shape) == 2 and output0.shape[1] == num_wave * num_time) and
+            not (len(output0.shape) == 2 and (output0.shape[0] == num_time and output0.shape[1] == num_wave)) and
+            not (len(output0.shape) == 3 and (output0.shape[1] == num_time and output0.shape[2] == num_wave))
         ):
             raise ValueError(
                 f"Shape of output {output0.shape} does not match the times ({len(self.times)}) "
@@ -168,7 +174,7 @@ class LearnedSurrogateModel:
         onnx.save(self._model, filepath)
 
     def predict_spectra_grid(self, **params):
-        """Compute the spectral energy distribution for given parameters.
+        """Compute the spectral energy distribution for single set of parameters.
 
         :param params: dict mapping parameter name to its value
         """
@@ -180,8 +186,6 @@ class LearnedSurrogateModel:
             inputs = {key: np.array(params[key]) for key in self.param_names}
 
         # Unflatten the output if needed.
-        output = self._ort_session.run([self.output_name], inputs)
-        if output.shape != (1, len(self.times), len(self.wavelengths)):
-            output = output.reshape(1, len(self.times), len(self.wavelengths))
-
+        output = self._ort_session.run([self.output_name], inputs)[0]
+        output = output.reshape(self.output_shape)
         return output
