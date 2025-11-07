@@ -12,10 +12,14 @@ from pathlib import Path
 def assert_safe_param_names(param_names):
     """Check that a list of parameter names are safe to use in dynamic method creation.
 
-    :param param_names: The original parameter names
+    :param param_names: The original parameter names as a list of strings.
     """
     identifier_re = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
     for name in param_names:
+        if not isinstance(name, str):
+            raise ValueError(
+                f"Parameter name '{name}' is not a string. Parameter names must be strings."
+            )
         if not identifier_re.match(name):
             raise ValueError(
                 f"Parameter name '{name}' is invalid. Parameter names can "
