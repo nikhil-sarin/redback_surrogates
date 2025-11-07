@@ -24,7 +24,12 @@ def assert_safe_param_names(param_names):
 
 
 class LearnedSurrogateModel:
-    """A general surrogate model class."""
+    """A general surrogate model class that produces spectral energy distributions
+    (f_lambda in units of erg/s/Hz) on a time and wavelength grid given a set of
+    input parameters. It wraps an underlying learned model in ONNX format to support
+    inference from multiple learning frameworks, including tensorflow, pytorch, and
+    sklearn.
+    """
 
     def __init__(
         self,
@@ -151,9 +156,13 @@ class LearnedSurrogateModel:
         onnx.save(self._model, filepath)
 
     def predict_spectra_grid(self, **params):
-        """Compute the spectral energy distribution for given parameters.
+        """Compute the rest frame spectral energy distribution for the given parameters
+        in units of erg/s/Hz.
 
         :param params: dict mapping parameter name to its value
+
+        :return: The predicted spectral energy distribution grid in f_lambda
+            and units of erg/s/Hz.
         """
         inputs = {
             key: np.array(params[key]) for key in self.param_names
