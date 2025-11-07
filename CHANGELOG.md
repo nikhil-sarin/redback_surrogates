@@ -1,5 +1,11 @@
 # All notable changes will be documented in this file
 
+## [0.2.6] 2025-08-28
+Version 0.2.6 release of `redback_surrogates`
+
+### Added
+- Added support for automated releases to PyPI via GitHub Actions.
+
 ## [0.2.5] 2025-08-28
 Version 0.2.5 release of `redback_surrogates`
 
