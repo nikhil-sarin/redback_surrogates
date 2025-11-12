@@ -40,18 +40,18 @@ class TestLearnedSurrogateModel(unittest.TestCase):
 
     def test_learned_surrogate_from_pytorch_onnx_file(self):
         """Test that we can load a surrogate model from a file."""
-        model = LearnedSurrogateModel.from_onnx_file(self.data_dir / "test_pytorch_model.onnx")
+        model = LearnedSurrogateModel.from_onnx_file(
+            self.data_dir / "test_pytorch_model.onnx"
+        )
         assert model.times is not None
         assert model.wavelengths is not None
-        assert np.array_equal(
-            model.param_names, ["freq", "amp", "center", "width"]
-        )
+        assert np.array_equal(model.param_names, ["freq", "amp", "center", "width"])
 
         # Test that we can use the dynamically created predict method to get outputs.
         output = model.predict_spectra_grid(
             freq=1.0, amp=10.0, center=1500.0, width=100.0
-        )[0]
-        assert output.shape == (1, len(model.times), len(model.wavelengths))
+        )
+        assert output.shape == (len(model.times), len(model.wavelengths))
 
         # Test that we can read the __repr__ output.
         repr_str = repr(model)
@@ -61,7 +61,9 @@ class TestLearnedSurrogateModel(unittest.TestCase):
         assert "Wavelengths Dimension: 3 steps [1000.0, 2000.0]" in repr_str
         assert "freq: The freq of the sine wave in Hz" in repr_str
         assert "amp: The amp of the sine wave." in repr_str
-        assert "center: The center freq of the Gaussian envelope in Angstroms." in repr_str
+        assert (
+            "center: The center freq of the Gaussian envelope in Angstroms." in repr_str
+        )
         assert "width: The width of the Gaussian envelope in Angstroms." in repr_str
 
         # Test that we can overwrite and retrieve parameter info.
@@ -69,11 +71,15 @@ class TestLearnedSurrogateModel(unittest.TestCase):
         repr_str = repr(model)
         assert "freq: This is a freq param." in repr_str
 
-        self.assertRaises(ValueError, model.add_parameter_info, "nonexistent_param", "Info")
+        self.assertRaises(
+            ValueError, model.add_parameter_info, "nonexistent_param", "Info"
+        )
 
     def test_learned_surrogate_from_scikit_onnx_file(self):
         """Test that we can load a surrogate model from a file."""
-        model = LearnedSurrogateModel.from_onnx_file(self.data_dir / "test_scikit_model.onnx")
+        model = LearnedSurrogateModel.from_onnx_file(
+            self.data_dir / "test_scikit_model.onnx"
+        )
         assert model.times is not None
         assert model.wavelengths is not None
         assert np.array_equal(
@@ -88,14 +94,14 @@ class TestLearnedSurrogateModel(unittest.TestCase):
 
     def test_learned_surrogate_from_flat_scikit_onnx_file(self):
         """Test that we can load a surrogate model from a file."""
-        model = LearnedSurrogateModel.from_onnx_file(self.data_dir / "test_flat_scikit_model.onnx")
+        model = LearnedSurrogateModel.from_onnx_file(
+            self.data_dir / "test_flat_scikit_model.onnx"
+        )
         assert model.times is not None
         assert len(model.times) == 3
         assert model.wavelengths is not None
         assert len(model.wavelengths) == 2
-        assert np.array_equal(
-            model.param_names, ["frequency", "amplitude"]
-        )
+        assert np.array_equal(model.param_names, ["frequency", "amplitude"])
 
         # Test that we can use the dynamically created predict method to get outputs.
         output = model.predict_spectra_grid(

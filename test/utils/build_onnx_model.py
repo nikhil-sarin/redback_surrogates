@@ -98,10 +98,10 @@ def _build_testing_data():
         )
         for idx in range(num_samples)
     ]
-    return waves, times, frequency, amplitude, center, width, y_vals
+    return waves, times, freq, amp, center, width, y_vals
 
 
-def _train_pytorch_model(waves, times, frequency, amplitude, center, width, y_vals):
+def _train_pytorch_model(waves, times, freq, amp, center, width, y_vals):
     # Convert everything to torch tensors
     freq = torch.tensor(freq)
     amp = torch.tensor(amp)
@@ -152,7 +152,7 @@ def _train_pytorch_model(waves, times, frequency, amplitude, center, width, y_va
     surrogate_model.add_parameter_info("amp", "The amp of the sine wave.")
     surrogate_model.add_parameter_info("center", "The center freq of the Gaussian envelope in Angstroms.")
     surrogate_model.add_parameter_info("width", "The width of the Gaussian envelope in Angstroms.")
-    surrogate_model.to_onnx_file("../data/test_model.onnx", overwrite=True)
+    surrogate_model.to_onnx_file("../data/test_pytorch_model.onnx", overwrite=True)
 
 
 def _train_scikit_model(waves, times, frequency, amplitude, center, width, y_vals):
