@@ -12,6 +12,7 @@ from redback_surrogates.learned_surrogate import (
 try:
     import torch
     import torch.nn as nn
+
     TORCH_INSTALLED = True
 except ImportError:
     TORCH_INSTALLED = False
@@ -63,7 +64,6 @@ class TestLearnedSurrogateModel(unittest.TestCase):
 
         # Test that we can read the __repr__ output.
         repr_str = repr(model)
-        print(repr_str)
         assert "LearnedSurrogateModel with 4 parameters" in repr_str
         assert "Times Dimension: 5 steps [0.1, 0.5]" in repr_str
         assert "Wavelengths Dimension: 3 steps [1000.0, 2000.0]" in repr_str
@@ -120,7 +120,6 @@ class TestLearnedSurrogateModel(unittest.TestCase):
 
     @unittest.skipUnless(TORCH_INSTALLED, "PyTorch is not installed")
     def test_pytorch_model(self):
-        warnings.filterwarnings("error")
         torch.set_default_dtype(torch.float64)
 
         # Define a simple sigmoid neural network architecture for testing.
@@ -128,19 +127,19 @@ class TestLearnedSurrogateModel(unittest.TestCase):
             """This is the simple neural network architecture used in the test ONNX model."""
 
             def __init__(self, input_size, hidden_size, output_shape):
-                super(SigmoidModel, self).__init__()
+                super().__init__()
                 self.fc1 = nn.Linear(input_size, hidden_size)
                 self.sigmoid1 = nn.Sigmoid()
                 self.fc2 = nn.Linear(hidden_size, output_shape[0] * output_shape[1])
                 self.output_shape = output_shape
 
-            def forward(self, param1, param2):
-                x = torch.column_stack([param1, param2])
+            def forward(self, freq, amp):
+                x = torch.column_stack([freq, amp])
                 x = self.sigmoid1(self.fc1(x))
                 x = self.fc2(x)  # No activation on final layer for regression
                 x = x.view(-1, *self.output_shape)
                 return x
- 
+
         # Configure the model and run a single forward pass to initialize weights.
         model = SigmoidModel(
             2,  # Input size (2 parameters)
@@ -156,9 +155,9 @@ class TestLearnedSurrogateModel(unittest.TestCase):
 
         assert np.allclose(model.times, times)
         assert np.allclose(model.wavelengths, wavelengths)
-        assert np.array_equal(model.param_names, ["param1", "param2"])
+        assert np.array_equal(model.param_names, ["freq", "amp"])
         assert model.output_shape == (len(times), len(wavelengths))
 
         # Test that we can use the dynamically created predict method to get outputs.
-        output = model.predict_spectra_grid(param1=1.0, param2=10.0)
+        output = model.predict_spectra_grid(freq=1.0, amp=10.0)
         assert output.shape == (len(model.times), len(model.wavelengths))

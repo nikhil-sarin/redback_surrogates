@@ -87,7 +87,7 @@ class LearnedSurrogateModel:
 
         # Determine if we need to collapse the parameters into a single input array
         # such as used for sklearn models.
-        self._collapse_parameters = len(self.param_names) > 1 and (len(model.graph.input) == 1)
+        self._collapse_parameters = len(self.param_names) > 1 and len(model.graph.input) == 1
 
         # Create the ONNX runtime session for inference.
         self._ort_session = rt.InferenceSession(
@@ -125,7 +125,8 @@ class LearnedSurrogateModel:
 
         param_info = self._metadata.get("parameter_info", {})
         for name in self.param_names:
-            description += f" - {name}: {param_info.get(name, 'No description available')}\n"
+            info = param_info.get(name, "No description available")
+            description += (f" - {name}: {info}\n")
         return description
 
     @property
@@ -145,7 +146,7 @@ class LearnedSurrogateModel:
         :param info: The information string about the parameter
         """
         if param_name not in self.param_names:
-            raise ValueError(f"Parameter name '{param_name}' is not in the model parameters.")
+            raise ValueError(f"'{param_name}' is not in the model parameters.")
         if "parameter_info" not in self._metadata:
             self._metadata["parameter_info"] = {}
         self._metadata["parameter_info"][param_name] = info
@@ -162,7 +163,7 @@ class LearnedSurrogateModel:
         for prop in model.metadata_props:
             metadata[prop.key] = json.loads(prop.value)
         return metadata
-    
+
     @classmethod
     def from_pytorch_model(cls, pytorch_model, times, wavelengths, param_info=None):
         """Create a LearnedSurrogateModel from a PyTorch model.
@@ -188,7 +189,7 @@ class LearnedSurrogateModel:
         # We create example input that has one float for each parameter.
         example_input = tuple(torch.tensor(1.1) for _ in param_info)
 
-        # Compile the PyTorch model to ONNX format using torch.onnx.export, build 
+        # Compile the PyTorch model to ONNX format using torch.onnx.export, build
         # the surrogate model, and add parameter info.
         onnx_program = torch.onnx.export(pytorch_model, example_input, dynamo=True)
         surrogate_model = LearnedSurrogateModel(
@@ -200,7 +201,6 @@ class LearnedSurrogateModel:
             surrogate_model.add_parameter_info(name, info)
 
         return surrogate_model
-
 
     @classmethod
     def from_onnx_file(cls, filepath):
