@@ -36,7 +36,7 @@ class SigmoidModel(nn.Module):
         self.output_shape = output_shape
 
     def forward(self, freq, amp, center, width):
-        x = torch.stack([freq, amp, center, width]).T
+        x = torch.column_stack([freq, amp, center, width])
         x = self.sigmoid1(self.fc1(x))
         x = self.sigmoid2(self.fc2(x))
         x = self.fc3(x)  # No activation on final layer for regression
@@ -98,6 +98,7 @@ def _build_testing_data():
         )
         for idx in range(num_samples)
     ]
+    y_vals = np.array(y_vals)
     return waves, times, freq, amp, center, width, y_vals
 
 

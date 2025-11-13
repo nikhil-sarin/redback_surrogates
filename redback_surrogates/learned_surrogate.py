@@ -1,5 +1,6 @@
 """A class for general surrogate models learned from data."""
 
+import inspect
 import json
 import numpy as np
 import onnx
@@ -161,6 +162,45 @@ class LearnedSurrogateModel:
         for prop in model.metadata_props:
             metadata[prop.key] = json.loads(prop.value)
         return metadata
+    
+    @classmethod
+    def from_pytorch_model(cls, pytorch_model, times, wavelengths, param_info=None):
+        """Create a LearnedSurrogateModel from a PyTorch model.
+
+        :param pytorch_model: The PyTorch model to convert
+        :param times: List of time points
+        :param wavelengths: List of wavelength points
+        :param param_info: Optional dictionary mapping parameter names to descriptions.
+
+        :return: An instance of LearnedSurrogateModel
+        """
+        try:
+            import torch
+        except ImportError:
+            raise ImportError("PyTorch is required to use from_pytorch_model.")
+
+        if param_info is None:
+            # If no parameter info is provided, try to get the parameter names
+            # from the model's forward method.
+            args = inspect.getfullargspec(pytorch_model.forward).args
+            param_info = {name: "No description available" for name in args if name != "self"}
+
+        # We create example input that has one float for each parameter.
+        example_input = tuple(torch.tensor(1.1) for _ in param_info)
+
+        # Compile the PyTorch model to ONNX format using torch.onnx.export, build 
+        # the surrogate model, and add parameter info.
+        onnx_program = torch.onnx.export(pytorch_model, example_input, dynamo=True)
+        surrogate_model = LearnedSurrogateModel(
+            onnx_program.model_proto,
+            times=times,
+            wavelengths=wavelengths,
+        )
+        for name, info in param_info.items():
+            surrogate_model.add_parameter_info(name, info)
+
+        return surrogate_model
+
 
     @classmethod
     def from_onnx_file(cls, filepath):
