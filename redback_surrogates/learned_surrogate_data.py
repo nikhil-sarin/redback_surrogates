@@ -90,23 +90,6 @@ class LearnedSurrogateDataset:
             [self.data[param][idx] for param in self.parameter_names]
         )
 
-    def get_input_tensors(self, idx=None):
-        """Retrieves the input parameters for a given index.
-
-        :param idx: An integer or array specifying the index/indices of the desired data.
-            If None, returns all input parameters.
-        :return: A list of tensors containing the parameter values as columns (in the same order
-            as the parameter names).
-        """
-        try:
-            import torch
-        except ImportError as err:
-            raise ImportError("PyTorch is required to use this method.") from err
-
-        if idx is None:
-            idx = np.arange(len(self.data))
-        return [torch.tensor(self.data[param][idx]) for param in self.parameter_names]
-
     def get_output(self, idx=None):
         """Retrieves the output (grid) data for a given index or indices.
 
