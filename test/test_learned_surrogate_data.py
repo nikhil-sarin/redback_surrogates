@@ -5,7 +5,10 @@ import unittest
 from astropy.table import Table
 from pathlib import Path
 
-from redback_surrogates.learned_surrogate_data import LearnedSurrogateDataset
+from redback_surrogates.learned_surrogate_data import (
+    create_data_set_from_function,
+    LearnedSurrogateDataset,
+)
 
 
 class TestLearnedSurrogateDataset(unittest.TestCase):
@@ -230,3 +233,120 @@ class TestLearnedSurrogateDataset(unittest.TestCase):
         train_inputs = set([row[0] for row in train_dataset.get_input()])
         test_inputs = set([row[0] for row in test_dataset.get_input()])
         assert train_inputs.isdisjoint(test_inputs)
+
+    def test_create_data_set_from_function(self):
+        """Test that we can create a LearnedSurrogateDataset from a function."""
+
+        def _example_function(param_a, param_b, param_c, other_param=True):
+            # The output depends on the input parameters and an optional keyword parameter.
+            if other_param:
+                return np.array(
+                    [
+                        [param_a, param_b, param_c],
+                        [param_a + param_b, param_b + param_c, param_c + param_a],
+                    ]
+                )
+            else:
+                return np.array([[1.0, 2.0, 3.0], [-1.0, -2.0, -3.0]])
+
+        num_samples = 10
+        input_params = {
+            "param_a": np.arange(num_samples),
+            "param_b": 1.5 * np.arange(num_samples),
+            "param_c": 1.0 / (np.arange(num_samples) + 1.0),
+        }
+        input_table = Table(input_params)
+
+        times = np.array([0.1, 0.2])
+        wavelengths = np.array([1000.0, 2000.0, 3000.0])
+        dataset = create_data_set_from_function(
+            _example_function,
+            input_table,
+            times=times,
+            wavelengths=wavelengths,
+        )
+        assert len(dataset) == num_samples
+        assert dataset.parameter_names == ["param_a", "param_b", "param_c"]
+        assert dataset._output_column == "output"
+        assert np.array_equal(dataset.times, times)
+        assert np.array_equal(dataset.wavelengths, wavelengths)
+
+        # Check that the outputs are correct.
+        for i in range(num_samples):
+            expected_output = _example_function(
+                input_params["param_a"][i],
+                input_params["param_b"][i],
+                input_params["param_c"][i],
+            )
+            assert np.array_equal(dataset.get_output(i), expected_output)
+
+        # We can also specify additional keyword arguments.
+        dataset = create_data_set_from_function(
+            _example_function,
+            input_table,
+            times=times,
+            wavelengths=wavelengths,
+            other_param=False,
+        )
+        expected_output = np.array([[1.0, 2.0, 3.0], [-1.0, -2.0, -3.0]])
+        for i in range(num_samples):
+            assert np.array_equal(dataset.get_output(i), expected_output)
+
+    def test_create_data_set_from_function_sep_files(self):
+        """Test that we can create a LearnedSurrogateDataset from a function and
+        save the results into separate files."""
+
+        def _example_function(param_a, param_b, param_c, other_param=True):
+            return np.array(
+                [
+                    [param_a, param_b, param_c],
+                    [param_a + param_b, param_b + param_c, param_c + param_a],
+                ]
+            )
+
+        num_samples = 5
+        input_params = {
+            "param_a": np.arange(num_samples),
+            "param_b": 1.5 * np.arange(num_samples),
+            "param_c": 1.0 / (np.arange(num_samples) + 1.0),
+        }
+        input_table = Table(input_params)
+
+        times = np.array([0.1, 0.2])
+        wavelengths = np.array([1000.0, 2000.0, 3000.0])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            filename = Path(tmpdir) / "from_func.ecsv"
+
+            # Save the data set and check that the files are created.
+            dataset = create_data_set_from_function(
+                _example_function,
+                input_table,
+                times=times,
+                wavelengths=wavelengths,
+                filename=filename,
+                separate_files=True,
+                overwrite=True,
+            )
+            assert not dataset.in_memory
+            assert filename.exists()
+            for idx in range(num_samples):
+                assert (filename.parent / f"{filename.stem}_{idx}.npy").exists()
+
+            # Check that we can reload the data set.
+            dataset2 = LearnedSurrogateDataset.from_file(filename)
+            assert len(dataset2) == num_samples
+            assert dataset2.parameter_names == ["param_a", "param_b", "param_c"]
+            assert dataset2._output_column == "output"
+            assert np.array_equal(dataset2.times, times)
+            assert np.array_equal(dataset2.wavelengths, wavelengths)
+            assert not dataset2.in_memory
+
+            # Check that the outputs are correct.
+            for i in range(num_samples):
+                expected_output = _example_function(
+                    input_params["param_a"][i],
+                    input_params["param_b"][i],
+                    input_params["param_c"][i],
+                )
+                assert np.array_equal(dataset2.get_output(i), expected_output)

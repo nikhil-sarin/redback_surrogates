@@ -238,3 +238,71 @@ class LearnedSurrogateDataset:
         )
 
         return (train_data, test_data)
+
+
+def create_data_set_from_function(
+    func,
+    parameters,
+    times=None,
+    wavelengths=None,
+    filename=None,
+    overwrite=False,
+    separate_files=False,
+    **kwargs,
+):
+    """Creates a LearnedSurrogateDataset from a redback-style function.
+
+    :param func: A callable that takes a set of parameters and returns a grid of values.
+    :param parameters: An astropy table with columns corresponding to the parameters required by the
+        function. Each row should represent a unique set of parameters.
+    :param times: An array-like object representing the time points associated with the
+        grid data.
+    :param wavelengths: An array-like object representing the wavelength points associated
+        with the grid data.
+    :param filename: An optional string or Path specifying the path to save the dataset file.
+        If provided the dataset will be saved to this file.
+    :param overwrite: A boolean indicating whether to overwrite the file if it already exists.
+    :param separate_files: A boolean indicating whether to save the output grids as separate
+        files (e.g., NumPy files) instead of directly in the table. If True, the output
+        grids will be saved as separate files and the table will contain references to those
+        files.
+    :param kwargs: Additional keyword arguments to pass to the function.
+
+    :return: An instance of LearnedSurrogateDataset containing the generated data.
+    """
+    if separate_files and filename is None:
+        raise ValueError("filename must be provided when separate_files is True.")
+    if filename is not None:
+        filename = Path(filename)
+        if filename.exists() and not overwrite:
+            raise FileExistsError(f"File already exists: {filename}")
+
+    # Generate the data for each set of parameters, either saving it as a file or storing
+    # it in memory.
+    data_column = []
+    for idx in range(len(parameters)):
+        output_grid = func(**parameters[idx], **kwargs)
+
+        if separate_files:
+            output_filename = f"{filename.parent / filename.stem}_{idx}.npy"
+            np.save(output_filename, output_grid)
+            data_column.append(output_filename)
+        else:
+            data_column.append(output_grid)
+
+    # Create a new table with the parameters and the output data.
+    expanded_table = parameters.copy()
+    expanded_table["output"] = data_column
+    data_set = LearnedSurrogateDataset(
+        expanded_table,
+        output_column="output",
+        times=times,
+        wavelengths=wavelengths,
+    )
+
+    # Save the dataset to a file if a filename was provided. We've already handled the
+    # separate_files case above, so we just need to save the table.
+    if filename is not None:
+        data_set.save(filename, overwrite=overwrite, separate_files=separate_files)
+
+    return data_set
