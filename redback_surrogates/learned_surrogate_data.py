@@ -74,24 +74,27 @@ class LearnedSurrogateDataset:
             data, output_column=output_column, times=times, wavelengths=wavelengths
         )
 
-    def get_input(self, idx):
+    def get_input(self, idx=None):
         """Retrieves the input parameters for a given index.
 
-        :param idx: An integer or slice specifying the index of the desired data point.
+        :param idx: An integer or array specifying the index/indices of the desired data.
+            If None, returns all input parameters.
         :return: A numpy array containing the parameter values as columns (in the same order
             as the parameter names).
         """
-        if np.isscalar(idx):
+        if idx is None:
+            idx = np.arange(len(self.data))
+        elif np.isscalar(idx):
             return np.asarray([self.data[param][idx] for param in self.parameter_names])
-        else:
-            return np.column_stack(
-                [self.data[param][idx] for param in self.parameter_names]
-            )
+        return np.column_stack(
+            [self.data[param][idx] for param in self.parameter_names]
+        )
 
-    def get_input_tensors(self, idx):
+    def get_input_tensors(self, idx=None):
         """Retrieves the input parameters for a given index.
 
-        :param idx: An integer or slice specifying the index of the desired data point.
+        :param idx: An integer or array specifying the index/indices of the desired data.
+            If None, returns all input parameters.
         :return: A list of tensors containing the parameter values as columns (in the same order
             as the parameter names).
         """
@@ -100,22 +103,19 @@ class LearnedSurrogateDataset:
         except ImportError as err:
             raise ImportError("PyTorch is required to use this method.") from err
 
-        if np.isscalar(idx):
-            return [
-                torch.tensor(self.data[param][idx]) for param in self.parameter_names
-            ]
-        else:
-            return [
-                torch.tensor(self.data[param][idx].value)
-                for param in self.parameter_names
-            ]
+        if idx is None:
+            idx = np.arange(len(self.data))
+        return [torch.tensor(self.data[param][idx]) for param in self.parameter_names]
 
-    def get_output(self, idx):
+    def get_output(self, idx=None):
         """Retrieves the output (grid) data for a given index or indices.
 
-        :param idx: An integer or slice specifying the index of the desired data point.
-        :return: A NumPy array containing the grid data associated with the specified index.
+        :param idx: An integer or array specifying the index/indices of the desired data.
+            If None, returns all output data.
+        :return: A NumPy array containing the output values.
         """
+        if idx is None:
+            idx = np.arange(len(self.data))
         if np.isscalar(idx):
             row_data = [self.data[self._output_column][idx]]
             single_index = True
@@ -203,3 +203,38 @@ class LearnedSurrogateDataset:
         if self.wavelengths is not None:
             self.data.meta["wavelengths"] = self.wavelengths.tolist()
         self.data.write(filename, overwrite=True)
+
+    def split(self, test_size=0.2, random_state=None):
+        """Splits the dataset into training and testing sets.
+
+        :param test_size: A float between 0 and 1 representing the proportion of the dataset
+            to include in the test split.
+        :param random_state: An optional integer seed for reproducibility.
+        :return: A tuple containing the training and testing datasets as LearnedSurrogateDataset
+            instances.
+        """
+        if not (0 < test_size < 1):
+            raise ValueError("test_size must be a float between 0 and 1.")
+
+        np.random.seed(random_state)
+        indices = np.arange(len(self.data))
+        np.random.shuffle(indices)
+
+        split_idx = int(len(self.data) * (1 - test_size))
+        train_indices = indices[:split_idx]
+        test_indices = indices[split_idx:]
+
+        train_data = LearnedSurrogateDataset(
+            self.data[train_indices],
+            output_column=self._output_column,
+            times=self.times,
+            wavelengths=self.wavelengths,
+        )
+        test_data = LearnedSurrogateDataset(
+            self.data[test_indices],
+            output_column=self._output_column,
+            times=self.times,
+            wavelengths=self.wavelengths,
+        )
+
+        return (train_data, test_data)
