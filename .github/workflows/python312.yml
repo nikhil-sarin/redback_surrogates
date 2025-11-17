@@ -40,4 +40,4 @@ jobs:
         pip install --no-cache-dir pytest-cov coverage coverage-badge coveralls
     - name: Run tests
       run: |
-        coverage run -m pytest test/model_test.py
+        coverage run -i -m pytest test/model_test.py

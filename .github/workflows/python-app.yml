@@ -40,7 +40,7 @@ jobs:
         pip install --no-cache-dir pytest-cov coverage coverage-badge coveralls
     - name: Run tests
       run: |
-        coverage run -m pytest test/ --durations=10
+        coverage run -i -m pytest test/ --durations=10
         coverage lcov
         coverage html
     - name: Archive production artifacts
