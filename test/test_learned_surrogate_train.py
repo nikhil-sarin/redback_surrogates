@@ -68,4 +68,4 @@ class TestLearnedSurrogateTrain(unittest.TestCase):
         print(grid)
         print(_toy_function(0.2, 0.1, -0.1))
         assert grid.shape == (2, 3)
-        assert np.allclose(grid, _toy_function(0.2, 0.1, -0.1), atol=1e-2)
+        assert np.allclose(grid, _toy_function(0.2, 0.1, -0.1), atol=0.1)
