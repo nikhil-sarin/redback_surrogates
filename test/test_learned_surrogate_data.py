@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import tempfile
 import unittest
 
@@ -62,6 +63,46 @@ class TestLearnedSurrogateDataset(unittest.TestCase):
         )
         assert np.array_equal(dataset.times, times)
         assert np.array_equal(dataset.wavelengths, wavelengths)
+
+    def test_learned_surrogate_dataset_scaled(self):
+        """Test that we can create a scaled LearnedSurrogateDataset."""
+        data = Table(
+            {
+                "param1": [1, 2, 3],
+                "param2": [4, 5, 6],
+                "grids": [
+                    np.array([[0.1, 0.2, 0.3], [0.3, 0.4, 5.0]]),
+                    np.array([[0.5, 0.6, 0.7], [0.7, 0.8, 0.9]]),
+                    np.array([[0.9, 1.0, 1.1], [1.1, 1.2, 1.3]]),
+                ],
+            }
+        )
+        dataset = LearnedSurrogateDataset(
+            data,
+            output_column="grids",
+            scale_output=True,
+        )
+        assert len(dataset) == 3
+        assert dataset.parameter_names == ["param1", "param2"]
+        assert dataset._output_column == "grids"
+        assert dataset.times is None
+        assert dataset.wavelengths is None
+        assert dataset.output_scale == pytest.approx(1.0 / 4.9)
+        assert dataset.output_shift == pytest.approx(-0.1)
+
+        # We can access the input parameters.
+        assert np.array_equal(dataset.get_input(), np.array([[1, 4], [2, 5], [3, 6]]))
+        assert np.array_equal(dataset.get_input(0), np.array([1, 4]))
+        assert np.array_equal(dataset.get_input([0, 2]), np.array([[1, 4], [3, 6]]))
+
+        # We can access the scaled output grids. They are shifted by -0.1 and
+        # scaled by 1.3 - 0.1 = 1.2.
+        expected0 = (np.array([[0.1, 0.2, 0.3], [0.3, 0.4, 5.0]]) - 0.1) / 4.9
+        assert np.allclose(dataset.get_output(0), expected0)
+
+        expected2 = (np.array([[0.9, 1.0, 1.1], [1.1, 1.2, 1.3]]) - 0.1) / 4.9
+        expected02 = np.array([expected0, expected2])
+        assert np.allclose(dataset.get_output([0, 2]), expected02)
 
     def test_learned_surrogate_dataset_to_from_file(self):
         """Test that we can save and load a LearnedSurrogateDataset."""

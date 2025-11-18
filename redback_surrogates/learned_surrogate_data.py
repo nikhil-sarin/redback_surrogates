@@ -26,17 +26,40 @@ class LearnedSurrogateDataset:
         the grid data.
     :param wavelengths: An optional array-like object representing the wavelength points
         associated with the grid data.
+    :param scale_output: A boolean indicating whether to normalize the output data
+        to the range [0, 1] based on the bounds of the output data.
     """
 
-    def __init__(self, data, output_column="filename", times=None, wavelengths=None):
+    def __init__(
+            self,
+            data,
+            output_column="filename",
+            times=None,
+            wavelengths=None,
+            scale_output=False,
+    ):
         self.data = data
         self._output_column = output_column
         if output_column not in data.colnames:
             raise ValueError(f"Grid column '{output_column}' not found in the dataset.")
         self._in_files = np.issubdtype(data[output_column].dtype, np.str_)
         self.parameter_names = [col for col in data.colnames if col != output_column]
+
         self.times = times
         self.wavelengths = wavelengths
+
+        # If we want to normalize the data, compute the bounds for normalization.
+        # We load the data without scaling to compute the bounds.
+        self.scale_output = False
+        self._out_bnds = (0.0, 1.0)
+        self.output_shift = 0.0  # First load the d
+        self.output_scale = 1.0
+        if scale_output:
+            output = self.get_output()
+            self._out_bnds = (np.min(output), np.max(output))
+            self.output_shift = -self._out_bnds[0]
+            self.output_scale = 1.0 / np.max([self._out_bnds[1] - self._out_bnds[0], 1e-8])
+            self.scale_output = True
 
     def __len__(self):
         return len(self.data)
@@ -112,6 +135,12 @@ class LearnedSurrogateDataset:
             row_data = []
             for idx, filename in enumerate(filenames):
                 row_data.append(np.load(filename))
+
+        # Scale the output to [0.0, 1.0] if requested.
+        if self.scale_output:
+            row_data = [
+                (data + self.output_shift) * self.output_scale for data in row_data
+            ]
 
         # Return a single array if the input index is a scalar, otherwise return a
         # multi-dimensional array with all the data.
