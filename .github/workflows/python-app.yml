@@ -29,7 +29,7 @@ jobs:
         pip install flake8 pytest pytest-cov coverage coverage-badge coveralls
     - name: Run tests
       run: |
-        coverage run -m pytest test/ --durations=10
+        coverage run --omit="*_remote_module_non_scriptable.py" -m pytest test/ --durations=10
         coverage lcov
         coverage html
     - name: Archive production artifacts
