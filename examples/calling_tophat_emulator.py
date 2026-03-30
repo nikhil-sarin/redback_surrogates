@@ -1,7 +1,7 @@
 # A basic example of how to call the tophat emulator model. Note that ideally you should be calling this model using the redback interface.
 
 import numpy as np
-import redback_surrogates as rs
+from redback_surrogates import afterglowmodels
 import matplotlib.pyplot as plt
 
 # Set up the parameters for the model
@@ -16,6 +16,6 @@ logepsb = -2
 g0 = 100
 
 # Call the model
-out = rs.afterglowmodels.tophat_emulator(tt, thv, loge0, thc, logn0, p, logepse, logepsb, g0, frequency=np.log10(2e14))
+out = afterglowmodels.tophat_emulator(tt, thv, loge0, thc, logn0, p, logepse, logepsb, g0, frequency=np.log10(2e14))
 plt.loglog(tt, out)
 plt.show()
