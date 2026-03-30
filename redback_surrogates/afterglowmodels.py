@@ -2,16 +2,22 @@ import pickle
 from scipy import interpolate
 import numpy as np
 import os
+from functools import lru_cache
 from redback_surrogates.utils import citation_wrapper
 dirname = os.path.dirname(__file__)
 
-
-with open(f"{dirname}/surrogate_data/tophat_redback_300x3.pkl", "rb") as f:
-    model = pickle.load(f)
-with open(f"{dirname}/surrogate_data/tophat_redback_scaley.pkl", "rb") as sy:
-    scalerY= pickle.load(sy)
-with open(f"{dirname}/surrogate_data/tophat_redback_scalex.pkl", "rb") as sx:
-    scalerX = pickle.load(sx) 
+@lru_cache(maxsize=None)
+def _load_tophat_models():
+    try:
+        with open(f"{dirname}/surrogate_data/tophat_redback_300x3.pkl", "rb") as f:
+            model = pickle.load(f)
+        with open(f"{dirname}/surrogate_data/tophat_redback_scaley.pkl", "rb") as sy:
+            scalerY = pickle.load(sy)
+        with open(f"{dirname}/surrogate_data/tophat_redback_scalex.pkl", "rb") as sx:
+            scalerX = pickle.load(sx)
+    except Exception as e:
+        raise RuntimeError(f"Error loading tophat surrogate data: {e}. The tophat_emulator will not work without this data.")
+    return {'model': model, 'scalerX': scalerX, 'scalerY': scalerY}
 
 
 def _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency):
@@ -42,14 +48,15 @@ def tophat_emulator(new_time, thv, loge0, thc, logn0, p, logepse, logepsb, g0, *
     :param frequency: frequency of the band to view in- single number or same length as time array (in log10 hz)
     :return: flux density at each time for given frequency
     """
+    models = _load_tophat_models()
     
     frequency = kwargs['frequency']
     test_data = _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency)
     logtime = np.logspace(2.94,7.41,100)/86400
     
-    xtests = scalerX.transform(test_data)
-    prediction = model.predict(xtests)
-    prediction = np.exp(scalerY.inverse_transform(prediction))
+    xtests = models['scalerX'].transform(test_data)
+    prediction = models['model'].predict(xtests)
+    prediction = np.exp(models['scalerY'].inverse_transform(prediction))
     
     afterglow = interpolate.interp1d(logtime, prediction, kind='linear', fill_value='extrapolate')
     fluxd = afterglow(new_time)
