@@ -2,26 +2,22 @@ import pickle
 from scipy import interpolate
 import numpy as np
 import os
+from functools import lru_cache
 from redback_surrogates.utils import citation_wrapper
 dirname = os.path.dirname(__file__)
 
-# Lazy load sklearn models to avoid conflicts with torch in kilonovamodels
-_tophat_models = None
-
+@lru_cache(maxsize=None)
 def _load_tophat_models():
-    global _tophat_models
-    if _tophat_models is None:
-        try:
-            with open(f"{dirname}/surrogate_data/tophat_redback_300x3.pkl", "rb") as f:
-                model = pickle.load(f)
-            with open(f"{dirname}/surrogate_data/tophat_redback_scaley.pkl", "rb") as sy:
-                scalerY = pickle.load(sy)
-            with open(f"{dirname}/surrogate_data/tophat_redback_scalex.pkl", "rb") as sx:
-                scalerX = pickle.load(sx)
-            _tophat_models = {'model': model, 'scalerX': scalerX, 'scalerY': scalerY}
-        except Exception as e:
-            raise RuntimeError(f"Error loading tophat surrogate data: {e}. The tophat_emulator will not work without this data.")
-    return _tophat_models
+    try:
+        with open(f"{dirname}/surrogate_data/tophat_redback_300x3.pkl", "rb") as f:
+            model = pickle.load(f)
+        with open(f"{dirname}/surrogate_data/tophat_redback_scaley.pkl", "rb") as sy:
+            scalerY = pickle.load(sy)
+        with open(f"{dirname}/surrogate_data/tophat_redback_scalex.pkl", "rb") as sx:
+            scalerX = pickle.load(sx)
+    except Exception as e:
+        raise RuntimeError(f"Error loading tophat surrogate data: {e}. The tophat_emulator will not work without this data.")
+    return {'model': model, 'scalerX': scalerX, 'scalerY': scalerY}
 
 
 def _shape_data(thv, loge0, thc, logn0, p, logepse, logepsb, g0,frequency):

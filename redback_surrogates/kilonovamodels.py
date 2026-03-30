@@ -1,4 +1,5 @@
 import numpy as np
+from functools import lru_cache
 # numpy 2.0 removed trapz; patch before importing kilonovanet which still uses it
 if not hasattr(np, 'trapz'):
     np.trapz = np.trapezoid
@@ -7,6 +8,10 @@ from collections import namedtuple
 from redback_surrogates.utils import citation_wrapper, convert_to_observer_frame
 import os
 dirname = os.path.dirname(__file__)
+
+@lru_cache(maxsize=None)
+def _get_kilonovanet_model(metadata_file, torch_file):
+    return knnet.Model(metadata_file, torch_file)
 
 @citation_wrapper('https://ui.adsabs.harvard.edu/abs/2022MNRAS.516.1137L/abstract')
 def bulla_bns_kilonovanet_spectra(time_source_frame, redshift, mej_dyn, mej_disk, phi, costheta_obs, **kwargs):
@@ -27,7 +32,7 @@ def bulla_bns_kilonovanet_spectra(time_source_frame, redshift, mej_dyn, mej_disk
     wavelength = np.linspace(100.0, 99900, 500)
     time_observer_frame, wavelength_observer_frame = convert_to_observer_frame(time_source_frame, wavelength, redshift)
     physical_parameters = np.array([mej_dyn, mej_disk, phi, costheta_obs])
-    model = knnet.Model(metadata_file, torch_file)
+    model = _get_kilonovanet_model(metadata_file, torch_file)
     spectra, unique_t = model.predict_spectra(physical_parameters, time_source_frame)
     return namedtuple('output', ['time', 'lambdas', 'spectra'])(time=time_observer_frame,
                                                                   lambdas=wavelength_observer_frame,
@@ -50,7 +55,7 @@ def bulla_nsbh_kilonovanet_spectra(time_source_frame, redshift, mej_dyn, mej_dis
     wavelength = np.linspace(100.0, 99900, 500)
     time_observer_frame, wavelength_observer_frame = convert_to_observer_frame(time_source_frame, wavelength, redshift)
     physical_parameters = np.array([mej_dyn, mej_disk, costheta_obs])
-    model = knnet.Model(metadata_file, torch_file)
+    model = _get_kilonovanet_model(metadata_file, torch_file)
     spectra, unique_t = model.predict_spectra(physical_parameters, time_source_frame)
     return namedtuple('output', ['time', 'lambdas', 'spectra'])(time=time_observer_frame,
                                                                   lambdas=wavelength_observer_frame,
@@ -73,7 +78,7 @@ def kasen_bns_kilonovanet_spectra(time_source_frame, redshift, mej, vej, chi, **
     wavelength = 10 ** (2.175198139181011 + np.linspace(0, 1, 1629) * 2.8224838828121763)
     time_observer_frame, wavelength_observer_frame = convert_to_observer_frame(time_source_frame, wavelength, redshift)
     physical_parameters = np.array([mej, vej, chi])
-    model = knnet.Model(metadata_file, torch_file)
+    model = _get_kilonovanet_model(metadata_file, torch_file)
     spectra, unique_t = model.predict_spectra(physical_parameters, time_source_frame)
     return namedtuple('output', ['time', 'lambdas', 'spectra'])(time=time_observer_frame,
                                                                   lambdas=wavelength_observer_frame,
