@@ -1,5 +1,13 @@
 # All notable changes will be documented in this file
 
+## [0.2.8] 2026-03-30
+Version 0.2.8 release of `redback_surrogates`
+
+### Added
+- Lazy loading of surrogate models in `__init__.py` to avoid importing keras/tensorflow unless needed.
+- LRU caching for tophat afterglow model loader to avoid reloading pickled sklearn models on every call.
+- LRU caching for kilonovanet model loader to avoid reloading PyTorch weights on every call.
+
 ## [0.2.7] 2026-03-05
 Version 0.2.7 release of `redback_surrogates`
 
