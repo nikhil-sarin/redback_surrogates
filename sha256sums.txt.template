@@ -1,0 +1,8 @@
+# Copy this file to `sha256sums.txt` before publishing the release.
+# Release repository: Her00000/redback_surrogates
+# Suggested tag: typeii-checkpoints-v1
+# Verify with: sha256sum -c sha256sums.txt
+
+9e799e8082b21b8bc00ab3c2f7efd53198414ae0e7718523583fbf907d46b4e8  emulator_6param_timeweighted_best.pt
+1a6ad87e31cf1e13acd19d2d49221710c7cbee2da034e135129ad8ad23c0031d  ae_cnn_v3_best.pt
+b1326e471432288cebf79638924045ddb42638dcc31390decaae0e7763c4514e  emulator_cnn_v3_6param_best.pt

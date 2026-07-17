@@ -1,0 +1,30 @@
+{
+  "title": "Type II surrogate checkpoints for redback_surrogates",
+  "version": "typeii-checkpoints-v1",
+  "description": "Release metadata for the external Type II interaction and photospheric surrogate checkpoints used by redback_surrogates. This metadata assumes distribution from GitHub Releases on the zheng-yang-zhang/redback_surrogates repository and can be updated before publication if the release tag or repository changes.",
+  "creators": [
+    {
+      "name": "Zhang, Zhengyang",
+      "affiliation": "Yunnan Observatories, Chinese Academy of Sciences",
+      "type": "ProjectMember"
+    }
+  ],
+  "keywords": [
+    "astronomy",
+    "supernova",
+    "surrogate model",
+    "Type II",
+    "checkpoint"
+  ],
+  "license": "gpl-3.0",
+  "access_right": "open",
+  "upload_type": "software",
+  "language": "eng",
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/zheng-yang-zhang/redback_surrogates",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    }
+  ]
+}

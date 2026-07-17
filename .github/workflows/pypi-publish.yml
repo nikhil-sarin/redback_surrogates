@@ -10,6 +10,9 @@ on:
 jobs:
   publish:
     name: Build and publish to PyPI
+    # Checkpoint-only releases (for example, typeii-checkpoints-v1) must not
+    # publish a duplicate Python package. Package releases use v* tags.
+    if: startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
     environment: release
     permissions:
